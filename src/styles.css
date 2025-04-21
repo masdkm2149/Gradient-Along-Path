@@ -1,0 +1,538 @@
+   /* --- Existing styles --- */
+   :root {
+    --color-primary: #0078ce; /* Figma blue */
+    --color-primary-darkened: #275F88; /* Darker blue */
+    --color-secondary: #383838; /* Dark gray */
+    --color-form-background: #2C2C2C; /* Border color */
+    --color-background: #1E1E1E; /* Slightly less dark gray */
+    --color-icons-lighter: #e9e9e9; /* Dark gray */
+    --color-icons: #dddddd; /* Darker gray */
+     --color-icons-darker: #bbbbbb; /* Light gray for icons */
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11.3px;
+    padding: 8px;
+    margin: 0;
+    background: var(--color-background); /* Figma's dark background */
+    color: #FFFFFF; /* White text */
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .label {
+    font-weight: 500;
+    font-size: 11.3px;
+    color: var(--color-icons);
+    margin-bottom: 4px;
+  }
+  /* Style for draggable weight label (visual cue) */
+  .label#stroke-weight-label {
+      user-select: none; /* Prevent text selection */
+  }
+
+  .input-row {
+    display: flex;
+    align-items: top;
+    gap: 8px;
+  }
+
+  .input-row.color-selection {
+    left:0;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  /* Base styles for number and text inputs */
+  input[type="number"], input[type="text"] {
+    padding: 4px;
+    border: 1px solid var(--color-secondary); /* Darker border */
+    font-size: 11.3px;
+    background: var(--color-form-background); /* Dark input background */
+    color: var(--color-icons);
+    border-radius: 5px; /* Moved border-radius here */
+  }
+  /* Default width for number inputs */
+  input[type="number"] {
+      width: 3.5rem;
+  }
+  input[type="text"]#current-stop-color {
+    margin-left: 8px;
+    text-indent: -7px;
+    margin-inline-end: 3px;
+    padding-left: 23px;
+    width: 96%;
+  }
+
+  /* Default width for text inputs (like hex color) */
+  input[type="number"]#stroke-weight {
+    width: 4.5rem;
+    padding: 5px;
+    text-indent: 19px;
+    user-select: none; /* Keep: Prevent text selection during drag */
+  }
+  /* *** ADDED: Specific style for the position text input *** */
+  input[type="text"]#current-stop-position {
+      width: 3rem; /* Match original number input width */
+      font-size: 11.3px;
+      padding-inline: 0.5rem;
+      color: var(--color-icons);
+  }
+  ::selection {
+    background-color: var(--color-primary-darkened);
+  }
+  /* Input focus styles */
+  input[type="number"]#current-stop-alpha:focus, input[type="number"]#current-stop-alpha {
+    box-shadow: none;
+    border: none;
+  }
+
+  input#current-stop-position:focus, button:focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input#current-stop-color:focus, input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary); /* Blue outline on focus */
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+   /* Style only the remaining standard select */
+  /* select#stroke-join removed */
+
+  .gradient-container {
+    position: relative;
+    height: 3rem;
+    width: 90%;
+    margin: 1rem auto 0.5rem auto;
+  }
+  .gradient-bar {
+    height: 2rem;
+    z-index: 5;
+    width: 100%;
+    background: linear-gradient(to right, #ff0000, #0000ff);
+    border: 1.5px solid var(--color-secondary);
+    border-radius: .33rem;
+    position: absolute;
+    top: 1rem;
+    cursor: pointer; /* Add cursor pointer to indicate clickable area */
+  }
+  .color-stops {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .color-stop {
+    position: absolute;
+    transform: translate(-50%, -9px);
+    z-index: 10;
+  }
+  .color-preview {
+    width: 16px;
+    height: 16px;
+    border: 5px solid var(--color-secondary);
+    border-radius: 20%;
+    cursor:pointer;
+    position: relative;
+  }
+  .selected .color-preview {
+    cursor:grab; /* Change cursor to indicate selected state */
+    border-color: var(--color-primary); /* Highlight selected stop */
+  }
+  .color-preview:active {
+    cursor: grabbing;
+  }
+  .color-preview::after {
+    content: "";
+    box-sizing: border-box;
+    border: 6px solid transparent;
+    border-top-color: var(--color-secondary);
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translate(-50%);
+  }
+  .selected .color-preview::after {
+    border-top-color: var(--color-primary); /* Highlight selected stop arrow */
+  }
+  input[type="color"] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    margin-left: 20px;
+    position: absolute;
+  }
+  button {
+    background: var(--color-secondary);
+    color: var(--color-icons);
+    border: none;
+    border-radius: 6px;
+    font-size: 11.5px;
+    cursor: pointer;
+    width: fit-content;
+    padding: 0.5rem 2rem;
+    margin: auto;
+    text-align: center;
+  }
+
+  /* Original styles for the stops editor panel */
+  .stops-panel {
+    margin: 0;
+    padding: 0.65rem;
+  }
+  .stops-panel-header {
+    display: flex;
+    flex-direction: row;
+    margin-left: 1.5px;
+    margin-bottom: .5rem;
+    justify-content: space-between;
+  }
+  button#add-stop-btn, button#remove-stop-btn {
+    padding: 2px 6px;
+    background: none;
+    font-size: 18px;
+  }
+  button:hover {
+    background-color: var(--color-form-background);
+  }
+  button#add-stop-btn:active, button#add-stop-btn:active:focus, button#add-stop-btn:active:hover, button#remove-stop-btn:active, button#remove-stop-btn:active:focus, button#remove-stop-btn:active:hover {
+    background-color: var(--color-secondary);
+  }
+  .stop-editor {
+    display: flex;
+    align-items: center;
+    margin: 0.25rem 0;
+  }
+  * {
+       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+       font-weight: 500;
+  }
+  .section.stroke-properties {
+    margin: 0;
+  }
+  /* Original '+' button styles */
+  button#add-stop-btn {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.5rem;
+    margin-top:-0.2rem;
+    padding: 0;
+    color: var(--color-icons-darker);
+    font-weight: 300;
+    position: absolute;
+    right: .93rem;
+    height: 0px;
+    line-height: 0;
+    padding: 8px 3px 14px 3px;
+  }
+  button#remove-stop-btn {
+    background: none;
+    padding: 0;
+    display: flex;
+    left: .7rem;
+    font-size: 14px;
+    height: 1.4rem;
+    padding:0px 6px 0px 6px;
+    font-weight: 400;
+    position: relative;
+  }
+  button#add-stop-btn:hover, button#remove-stop-btn:hover, .settings:hover {
+      background-color: var(--color-form-background); /* Match other buttons */
+   }
+   #line-break-vertical {
+      width: 1px;
+          transform: translateX(-8px);
+      height: 23px;
+      position: relative;
+      background-color: var(--color-background);
+      margin-left: -3.1rem; /* Adjusted for spacing */
+   }
+  .current-stop-preview {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--color-secondary);
+    border-radius: 3px;
+    position: absolute;
+    margin-left: 13.4px;
+    cursor: pointer;
+  }
+  label[for="current-stop-alpha"] {
+  text-indent: -3;
+  color: var(--color-icons);
+  }
+    input[type="number"]#current-stop-alpha {
+      width: 2rem;
+      text-align: right;
+  }
+  .input-column {
+    gap:0.2rem; /* space between label and inputs/forms */
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Prevent overflow issues */
+  }
+  .section.top-controls {
+    padding: 0.4rem .8rem;
+  }
+  /*.input-row:not(:has(.label[for="stroke-weight"])) {
+    margin-top: .5rem;
+    margin-bottom: .2rem;
+  }*/
+  input#stroke-weight {}
+  .label[for="start-cap-value"], .label[for="end-cap-value"], .label#stroke-weight-label, .label[for="stroke-join-value"] { /* Updated selector for weight/join label */
+    color: var(--color-icons-darker);
+    font-size: 10.8px;
+    font-weight: 600;
+  }
+
+/* --- CSS Modifications (Targeted) --- */
+
+/* Keep options always visible ONLY for the join selector */
+.custom-select-wrapper.join-options-visible .select-items {
+  /* Change from absolute positioning */
+  position: static;
+  /* Remove dropdown-specific styles */
+  border: none;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  border-radius: 5px;
+  background-color: var(--color-form-background);
+  padding: 2px 0;
+  /* Remove height/overflow constraints */
+  max-height: none;
+  overflow-y: visible;
+  padding-inline-start: 2px;
+  padding-inline-end: 2px;
+  align-items: center;
+}
+.custom-select-wrapper.join-options-visible{
+  width: min-content;
+}
+/* Style the selected item ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-option.same-as-selected {
+   background-color: var(--color-background);
+   border-color: var(--color-primary);
+}
+
+/* Hide the original trigger box ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-selected {
+  display: none;
+}
+
+
+  /* --- Custom Select Styles --- */
+  .custom-select-wrapper {
+      position: relative;
+      min-width: 5.6rem;
+      font-size: 11.3px;
+      color: var(--color-icons-lighter);
+  }
+  .custom-select .select-selected {
+      background-color: var(--color-background);
+      padding: 5px 20px 5px 5px; /* Make space for arrow */
+      border: 1px solid var(--color-secondary);
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      padding-inline: 10.5px;
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+      position: relative; /* For arrow positioning */
+      min-height: 21.6px; /* Match input height */
+      outline: none;
+      box-sizing: border-box;
+      width: 100%; /* Make selected box take full wrapper width */
+  }
+  .custom-select .select-selected::after { /* Dropdown arrow */
+      content: "";
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-28%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--color-icons); /* Arrow color */
+  }
+  .custom-select .select-selected.select-arrow-active::after { /* Arrow when open */
+      border-top: none;
+      border-bottom: 4px solid var(--color-icons);
+  }
+  .custom-select .select-items {
+      position: absolute;
+      background-color: var(--color-background);
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 99;
+      border: 1px solid var(--color-secondary);
+      border-radius:3px;
+      max-height: 150px; /* Optional: scroll for long lists */
+      overflow-y: auto;
+      box-sizing: border-box;
+  }
+  .custom-select .select-hide {
+      display: none;
+  }
+  .custom-select .select-option {
+      color: var(--color-icons-lighter);
+      padding: 5px 8px;
+      padding-inline: .66rem;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+  }
+  /* Adjust icon size within options */
+  .custom-select .select-option svg {
+      width: 14px; /* Keep consistent */
+      height: 14px; /* Make square */
+      fill: none; /* Use stroke for join icons */
+      stroke: currentColor; /* Inherit text color for stroke */
+      stroke-width: 1.5; /* Adjust stroke width as needed */
+      flex-shrink: 0; /* Prevent icon shrinking */
+      margin-top: .8px;
+  }
+  /* Specific icon size for selected display */
+  .custom-select .select-selected svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      flex-shrink: 0;
+      margin-top: .8px;
+  }
+  /* Cap icons use fill, not stroke */
+   .custom-select .select-option svg.cap-icon,
+   .custom-select .select-selected svg.cap-icon {
+      fill: currentColor;
+      stroke: none;
+      height: 10px; /* Revert cap icons to original height */
+   }
+   /* Arrow Cap icons use stroke */
+   .custom-select .select-option svg.arrow-cap-icon,
+   .custom-select .select-selected svg.arrow-cap-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      height: 10px;
+   }
+   .custom-select .same-as-selected {
+      background-color: var(--color-primary-darkened);
+      /* border-bottom: 1px solid var(--color-secondary); */ /* Removed border */
+  }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):active, .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):focus {background-color: var(--color-secondary); }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):hover:not(:active):not(:focus) {background-color: var(--color-form-background); }
+  /* Hide the actual input used for storing the value */
+  .custom-select-wrapper input[type="hidden"] {
+      display: none;
+  }
+  .weight-icon{
+    position: absolute;
+    margin-top: 25px;
+    margin-left: 1px;
+    pointer-events: none; /* Make icon non-interactive */
+  }
+
+
+/* --- Custom Tooltip Styles --- */
+.select-option svg {z-index: 1;}
+/* Make the container relative for absolute positioning of the tooltip */
+.custom-select-wrapper.join-options-visible .select-option {
+  position: relative; /* Needed for tooltip positioning */
+  padding: .3rem .55rem;
+  border-radius: 3px;
+}
+
+.custom-tooltip {
+visibility: hidden; /* Hidden by default */
+opacity: 0; /* Fade effect */
+transition: opacity 0.2s ease-in-out; /* Smooth fade */
+position: absolute;
+bottom: 100%; /* Position above the element */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+background-color: var(--color-background); /* Use your theme colors */
+color: var(--color-icons-lighter);
+border:1px solid var(--color-secondary);
+text-align: center;
+padding: 3px 6px;
+border-radius: 4px;
+font-size: 10px; /* Adjust as needed */
+white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Show the tooltip on hover */
+.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip {
+visibility: visible;
+opacity: 1;
+}
+/* Outer border/arrow */
+.custom-tooltip::before {
+content: "";
+position: absolute;
+top: 100%; /* Position below the tooltip body */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+border-width: 7.25px; /* Slightly larger than ::after */
+border-style: solid;
+/* Outer border color (e.g., white) on top, rest transparent */
+border-color: var(--color-secondary) transparent transparent transparent;
+}
+/* Inner border/arrow */
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--color-background) transparent transparent transparent;
+}
+.stop-editor {
+  /*background-color: var(--color-primary-darkened);
+  border-color: var(--color-primary);*/
+  padding: 3px;
+  outline: none;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+div[data-value="ARROW_LINES"] {
+}
+div#end-stop {
+  margin-left: -2px;
+}
+
+.settings {
+  height: 20px;
+  padding: 4px;
+  border-radius: 6px;
+  position: fixed;
+  color: var(--color-icons-darker);
+  right: 16px;
+}
+.select-selected span {
+width: 50px;
+}
+.select-items span {
+width: min-content;
+}
+.custom-tooltip, .custom-tooltip::after, .custom-tooltip::before {overflow: visible!important;}
+.select-items span, .select-selected span {
+text-overflow: ellipsis;
+white-space: nowrap;
+overflow: hidden;
+}
+.custom-select-wrapper:has(input#start-cap-value) .custom-select, .custom-select-wrapper:has(input#end-cap-value) .custom-select {
+min-width: 6.5rem;
+}
+

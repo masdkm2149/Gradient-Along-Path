@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+  <div class="container">
+    <div class="section stroke-properties">
+      <div class="section top-controls">
+        <div class="input-row">
+          <div class="input-column">
+            <div class="label" for="stroke-weight" id="stroke-weight-label">Weight</div>
+            <svg class="weight-icon" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6 6.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5M7 10v1h10v-1zm-.25-1a.75.75 0 0 0-.75.75v1.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-1.5a.75.75 0 0 0-.75-.75zM7 17v-2h10v2zm-1-2.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75z" clip-rule="evenodd" fill="var(--color-icons-darker)"></path></svg>
+            <input type="number" id="stroke-weight" value="1" min="0" step="any" draggable="false">
+          </div>
+          <div class="input-column">      
+            <div class="label" for="stroke-join-value">Join</div>
+            <div class="input-row">
+            <div class="custom-select-wrapper join-options-visible">
+              <input type="hidden" id="stroke-join-value" value="ROUND">
+              <div class="custom-select">
+                 <div class="select-selected" tabindex="0" id="stroke-join-select">
+                   </div>
+                 <div class="select-items">
+                   <div class="select-option" data-value="ROUND">
+                    <span class="custom-tooltip">Round</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9.2" cy="9.1" r="0.1" fill="currentColor"/>
+                      <circle cx="8.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.7" cy="9" r="0.1" fill="currentColor"/>
+                      <circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.8"/>
+                      </svg>
+                   </div>
+                   <div class="select-option" data-value="MITER">
+                    <span class="custom-tooltip">Miter</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <circle cx="8.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <path d="M1 13V1H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/>
+                      </svg>
+                   </div>
+                   <div class="select-option" data-value="BEVEL">
+                    <span class="custom-tooltip">Bevel</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.5" cy="7.5" r="0.1" fill="currentColor"/>
+                      <circle cx="7.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <path d="M13 1H7.24L1 8.2V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                   </div>
+                 </div>
+              </div>
+            </div>
+                          
+            <div class="settings">
+              <svg width="20" height="20" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 8.75C8.4665 8.75 9.25 7.9665 9.25 7C9.25 6.0335 8.4665 5.25 7.5 5.25C6.5335 5.25 5.75 6.0335 5.75 7C5.75 7.9665 6.5335 8.75 7.5 8.75Z" stroke="currentColor" stroke-width="1"/>
+                <path d="M8.52961 1.2558C8.31518 1.16699 8.0434 1.16699 7.49979 1.16699C6.95619 1.16699 6.68441 1.16699 6.46998 1.2558C6.18413 1.37421 5.95701 1.60133 5.8386 1.88719C5.78454 2.01769 5.76339 2.16945 5.75511 2.39082C5.74295 2.71614 5.57611 3.01726 5.29418 3.18003C5.01225 3.3428 4.66806 3.33672 4.38024 3.1846C4.18439 3.08108 4.04238 3.02352 3.90234 3.00509C3.59557 2.9647 3.28532 3.04783 3.03984 3.23619C2.85573 3.37746 2.71983 3.61285 2.44803 4.08362C2.17623 4.55439 2.04033 4.78977 2.01004 5.01986C1.96966 5.32663 2.05279 5.63688 2.24115 5.88237C2.32712 5.99443 2.44795 6.08858 2.63549 6.20641C2.91118 6.37966 3.08856 6.67477 3.08855 7.00033C3.08853 7.32588 2.91115 7.62093 2.63548 7.79413C2.44792 7.91202 2.32707 8.00623 2.24109 8.11828C2.05273 8.36375 1.9696 8.67397 2.00999 8.98074C2.04027 9.21081 2.17617 9.44624 2.44797 9.91699C2.71977 10.3877 2.85567 10.6232 3.03978 10.7644C3.28526 10.9528 3.59551 11.0359 3.90228 10.9955C4.04231 10.9771 4.18431 10.9195 4.38015 10.816C4.66799 10.6639 5.0122 10.6578 5.29415 10.8206C5.5761 10.9834 5.74295 11.2845 5.75511 11.6099C5.76339 11.8312 5.78454 11.983 5.8386 12.1135C5.95701 12.3993 6.18413 12.6265 6.46998 12.7449C6.68441 12.8337 6.95619 12.8337 7.49979 12.8337C8.0434 12.8337 8.31518 12.8337 8.52961 12.7449C8.81544 12.6265 9.04259 12.3993 9.16095 12.1135C9.21503 11.983 9.2362 11.8312 9.24449 11.6098C9.25662 11.2845 9.42345 10.9834 9.70538 10.8206C9.9873 10.6578 10.3315 10.6639 10.6194 10.816C10.8152 10.9195 10.9572 10.977 11.0972 10.9955C11.404 11.0359 11.7143 10.9528 11.9597 10.7644C12.1438 10.6231 12.2797 10.3877 12.5515 9.91693C12.8234 9.44618 12.9593 9.21081 12.9895 8.98074C13.0299 8.67397 12.9468 8.36369 12.7584 8.11823C12.6724 8.00617 12.5516 7.91196 12.364 7.79413C12.0884 7.62093 11.911 7.32583 11.911 7.00027C11.911 6.67471 12.0884 6.37972 12.364 6.20653C12.5516 6.08863 12.6725 5.99448 12.7585 5.88237C12.9468 5.63692 13.03 5.32667 12.9896 5.01989C12.9593 4.78981 12.8234 4.55443 12.5516 4.08366C12.2798 3.61289 12.1439 3.3775 11.9598 3.23623C11.7143 3.04787 11.404 2.96474 11.0973 3.00513C10.9573 3.02356 10.8153 3.08112 10.6194 3.18463C10.3316 3.33675 9.98736 3.34284 9.70544 3.18005C9.42345 3.01727 9.25662 2.71613 9.24449 2.39079C9.2362 2.16944 9.21503 2.01768 9.16095 1.88719C9.04259 1.60133 8.81544 1.37421 8.52961 1.2558Z" stroke="currentColor" stroke-width="1.25"/>
+                </svg></div>
+
+            </div> 
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-column">
+            <div class="label" for="start-cap-value">Start point</div>
+            <div class="custom-select-wrapper">
+              <input type="hidden" id="start-cap-value" value="ROUND">
+              <div class="custom-select">
+                 <div class="select-selected" tabindex="0" id="start-cap-select">
+                   </div>
+                 <div class="select-items select-hide">
+                   <div class="select-option" data-value="ROUND">
+                     <svg class="cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H5C3.67392 0 2.40215 0.526784 1.46447 1.46447C0.526784 2.40215 0 3.67392 0 5C0 6.32608 0.526784 7.59785 1.46447 8.53553C2.40215 9.47322 3.67392 10 5 10H13.5C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H5C3.93913 9 2.92172 8.57857 2.17157 7.82843C1.42143 7.07828 1 6.06087 1 5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5Z" fill="currentColor"/></svg>
+                     <span>Round</span>
+                   </div>
+                   <div class="select-option" data-value="SQUARE">
+                       <svg class="cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 10C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H1V1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H0.5C0.367392 0 0.240215 0.0526785 0.146447 0.146447C0.0526785 0.240215 0 0.367392 0 0.5V9.5C0 9.63261 0.0526785 9.75979 0.146447 9.85355C0.240215 9.94732 0.367392 10 0.5 10H13.5Z" fill="currentColor"/></svg>
+                       <span>Square</span>
+                   </div>
+                   <div class="select-option" data-value="ARROW_LINES">
+                       <svg class="arrow-cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M1 5H10" stroke="currentColor"/>
+                         <path d="M7 1.5L10.5 5L7 8.5" stroke="currentColor"/>
+                       </svg>
+                       <span>Line Arrow</span>
+                   </div>
+                   <div class="select-option" data-value="ARROW_EQUILATERAL">
+                       <svg class="arrow-cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M1 5H10" stroke="currentColor"/>
+                         <path d="M7 1L11 5L7 9L7 1Z" stroke="currentColor" fill="currentColor"/>
+                       </svg>
+                       <span>Triangle Arrow</span>
+                   </div>
+               </div>
+              </div>
+            </div>
+          </div>
+          <div class="input-column">
+            <div class="label" for="end-cap-value">End point</div>
+            <div class="custom-select-wrapper">
+               <input type="hidden" id="end-cap-value" value="ROUND">
+               <div class="custom-select">
+                  <div class="select-selected" tabindex="0" id="end-cap-select">
+                    </div>
+                  <div class="select-items select-hide">
+                      <div class="select-option" data-value="ROUND">
+                        <svg class="cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H5C3.67392 0 2.40215 0.526784 1.46447 1.46447C0.526784 2.40215 0 3.67392 0 5C0 6.32608 0.526784 7.59785 1.46447 8.53553C2.40215 9.47322 3.67392 10 5 10H13.5C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H5C3.93913 9 2.92172 8.57857 2.17157 7.82843C1.42143 7.07828 1 6.06087 1 5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5Z" fill="currentColor"/></svg>
+                        <span>Round</span>
+                      </div>
+                      <div class="select-option" data-value="SQUARE">
+                          <svg class="cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 10C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H1V1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H0.5C0.367392 0 0.240215 0.0526785 0.146447 0.146447C0.0526785 0.240215 0 0.367392 0 0.5V9.5C0 9.63261 0.0526785 9.75979 0.146447 9.85355C0.240215 9.94732 0.367392 10 0.5 10H13.5Z" fill="currentColor"/></svg>
+                          <span>Square</span>
+                      </div>
+                      <div class="select-option" data-value="ARROW_LINES">
+                          <svg class="arrow-cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 5H10" stroke="currentColor"/>
+                            <path d="M7 1.5L10.5 5L7 8.5" stroke="currentColor"/>
+                          </svg>
+                          <span>Line Arrow</span>
+                      </div>
+                      <div class="select-option" data-value="ARROW_EQUILATERAL">
+                          <svg class="arrow-cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 5H10" stroke="currentColor"/>
+                            <path d="M7 1L11 5L7 9L7 1Z" stroke="currentColor" fill="currentColor"/>
+                          </svg>
+                          <span>Triangle Arrow</span>
+                      </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="gradient-container">
+          <div class="gradient-bar" id="gradient-bar"></div>
+          <div class="color-stops" id="color-stops">
+            <div class="color-stop" id="start-stop" data-position="0" data-is-endpoint="true">
+              <div class="color-preview" id="start-preview" style="background: #ff0000"></div>
+              <input type="color" id="start-color" value="#ff0000">
+            </div>
+            <div class="color-stop" id="end-stop" data-position="100" data-is-endpoint="true">
+              <div class="color-preview" id="end-preview" style="background: #0000ff"></div>
+              <input type="color" id="end-color" value="#0000ff">
+            </div>
+            </div>
+        </div>
+
+        <div class="stops-panel">
+          <div class="stops-panel-header">
+            <div class="label">Stops</div>
+            <button id="add-stop-btn">+</button>
+          </div>
+          <div class="stop-editor">
+            <div class="input-row">
+               <input type="text" id="current-stop-position" value="0%" min="0" max="100" step="1">
+               </div>
+            <div class="input-row color-selection">
+              <div class="current-stop-preview" id="current-stop-color-preview"></div>
+              <input type="text" id="current-stop-color" value="#ff0000">
+              <div id="line-break-vertical"></div>
+              <input type="number" id="current-stop-alpha" value="100" min="0" max="100" step="1">
+              <label for="current-stop-alpha">%</label>
+            </div>
+            <button id="remove-stop-btn">—</button>
+          </div>
+        </div>
+      </div>
+      <button onclick="applyGradient()">Apply</button>
+    </div>
+</body>
+</html>
