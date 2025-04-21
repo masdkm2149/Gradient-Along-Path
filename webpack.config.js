@@ -1,36 +1,29 @@
-const { default: test } = require('node:test');
 const path = require('path');
-const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = (env, argv) => ({
-mode: argv.mode === 'production' ? 'production' : 'development',
-
-// This is necessary because Figma's 'eval' works differently than normal eval
-devtool: argv.mode === 'production' ? false : 'inline-source-map',
+  mode: argv.mode === 'production' ? 'production' : 'development',
+  devtool: argv.mode === 'production' ? false : 'inline-source-map',
   entry: {
-    code: './src/code.ts', // This is the entry point for our plugin code.
-    ui: './src/ui.ts', // This is the entry point for our UI code.
+    code: './src/code.ts',
+    ui: './src/ui.ts',
   },
   module: {
     rules: [
-      // Converts TypeScript code to JavaScript
       {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
       },
-      // Converts CSS
       {
         test: /\.css$/,
         use: [
-          'style-loader', // Injects styles into the DOM
-          'css-loader', // Turns CSS into CommonJS
+          MiniCssExtractPlugin.loader,
+          'css-loader',
         ],
-        exclude: /node_modules/
-      }
+      },
     ],
   },
-  // Webpack tries these extensions for you if you omit the extension like "import './file'"
   resolve: {
     extensions: ['.ts', '.js'],
   },
@@ -38,4 +31,9 @@ devtool: argv.mode === 'production' ? false : 'inline-source-map',
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+    }),
+  ],
 });

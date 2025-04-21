@@ -2,7 +2,7 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": ["es6"],
+    "lib": ["es6", "dom", "dom.iterable"],  // Added dom libraries
     "strict": true,
     "typeRoots": [
       "./node_modules/@types",
