@@ -1,4 +1,4 @@
-      // --- DOM Element References ---
+    // --- DOM Element References ---
       const startColorInput = document.getElementById('start-color');
       const endColorInput = document.getElementById('end-color');
       const startPreview = document.getElementById('start-preview');
