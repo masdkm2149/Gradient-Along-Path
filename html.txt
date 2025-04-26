@@ -1,3 +1,718 @@
+<!DOCTYPE html>
+<html>
+    <head>
+<style>
+     /* --- Existing styles --- */
+     :root {
+    --color-primary: #0078ce; /* Figma blue */
+    --color-primary-darkened: #275F88; /* Darker blue */
+    --color-secondary: #383838; /* Dark gray */
+    --color-form-background: #2C2C2C; /* Border color */
+    --color-background: #1E1E1E; /* Slightly less dark gray */
+    --color-icons-lighter: #e9e9e9; /* Dark gray */
+    --color-icons: #dddddd; /* Darker gray */
+     --color-icons-darker: #bbbbbb; /* Light gray for icons */
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11.3px;
+    padding: 8px;
+    margin: 0;
+    background: var(--color-background); /* Figma's dark background */
+    color: #FFFFFF; /* White text */
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .label {
+    font-weight: 500;
+    font-size: 11.3px;
+    color: var(--color-icons);
+    margin-bottom: 4px;
+  }
+  /* Style for draggable weight label (visual cue) */
+  .label#stroke-weight-label {
+      user-select: none; /* Prevent text selection */
+  }
+
+  .input-row {
+    display: flex;
+    align-items: top;
+    gap: 8px;
+  }
+
+  .input-row.color-selection {
+    left:0;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  /* Base styles for number and text inputs */
+  input[type="number"], input[type="text"] {
+    padding: 4px;
+    border: 1px solid var(--color-secondary); /* Darker border */
+    font-size: 11.3px;
+    background: var(--color-form-background); /* Dark input background */
+    color: var(--color-icons);
+    border-radius: 5px; /* Moved border-radius here */
+  }
+  /* Default width for number inputs */
+  input[type="number"] {
+      width: 3.5rem;
+  }
+  input[type="text"]#current-stop-color {
+    margin-left: 8px;
+    text-indent: -7px;
+    margin-inline-end: 3px;
+    padding-left: 23px;
+    width: 96%;
+  }
+
+  /* Default width for text inputs (like hex color) */
+  input[type="number"]#stroke-weight {
+    width: 4.5rem;
+    padding: 5px;
+    text-indent: 19px;
+    user-select: none; /* Keep: Prevent text selection during drag */
+  }
+  /* *** ADDED: Specific style for the position text input *** */
+  input[type="text"]#current-stop-position {
+      width: 3rem; /* Match original number input width */
+      font-size: 11.3px;
+      padding-inline: 0.5rem;
+      color: var(--color-icons);
+  }
+  ::selection {
+    background-color: var(--color-primary-darkened);
+  }
+  /* Input focus styles */
+  input[type="number"]#current-stop-alpha:focus, input[type="number"]#current-stop-alpha {
+    box-shadow: none;
+    border: none;
+  }
+
+  input#current-stop-position:focus, button:focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input#current-stop-color:focus, input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary); /* Blue outline on focus */
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+   /* Style only the remaining standard select */
+  /* select#stroke-join removed */
+
+  .gradient-container {
+    position: relative;
+    height: 3rem;
+    width: 90%;
+    margin: 1rem auto 0.5rem auto;
+  }
+  .gradient-bar {
+    height: 2rem;
+    z-index: 5;
+    width: 100%;
+    background: linear-gradient(to right, #ff0000, #0000ff);
+    border: 1.5px solid var(--color-secondary);
+    border-radius: .33rem;
+    position: absolute;
+    top: 1rem;
+    cursor: pointer; /* Add cursor pointer to indicate clickable area */
+  }
+  .color-stops {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .color-stop {
+    position: absolute;
+    transform: translate(-50%, -9px);
+    z-index: 10;
+  }
+  .color-preview {
+    width: 16px;
+    height: 16px;
+    border: 5px solid var(--color-secondary);
+    border-radius: 20%;
+    cursor:pointer;
+    position: relative;
+  }
+  .selected .color-preview {
+    cursor:grab; /* Change cursor to indicate selected state */
+    border-color: var(--color-primary); /* Highlight selected stop */
+  }
+  .color-preview:active {
+    cursor: grabbing;
+  }
+  .color-preview::after {
+    content: "";
+    box-sizing: border-box;
+    border: 6px solid transparent;
+    border-top-color: var(--color-secondary);
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translate(-50%);
+  }
+  .selected .color-preview::after {
+    border-top-color: var(--color-primary); /* Highlight selected stop arrow */
+  }
+  input[type="color"] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    margin-left: 20px;
+    position: absolute;
+  }
+  button {
+    background: var(--color-secondary);
+    color: var(--color-icons);
+    border: none;
+    border-radius: 6px;
+    font-size: 11.5px;
+    cursor: pointer;
+    width: fit-content;
+    padding: 0.5rem 2rem;
+    margin: auto;
+    text-align: center;
+  }
+
+  /* Original styles for the stops editor panel */
+  .stops-panel {
+    margin: 0;
+    padding: 0.65rem;
+  }
+  .stops-panel-header {
+    display: flex;
+    flex-direction: row;
+    margin-left: 1.5px;
+    margin-bottom: .5rem;
+    justify-content: space-between;
+  }
+  button#add-stop-btn, button#remove-stop-btn {
+    padding: 2px 6px;
+    background: none;
+    font-size: 18px;
+  }
+  button:hover {
+    background-color: var(--color-form-background);
+  }
+  button#add-stop-btn:active, button#add-stop-btn:active:focus, button#add-stop-btn:active:hover, button#remove-stop-btn:active, button#remove-stop-btn:active:focus, button#remove-stop-btn:active:hover {
+    background-color: var(--color-secondary);
+  }
+  .stop-editor {
+    display: flex;
+    align-items: center;
+    margin: 0.25rem 0;
+  }
+  * {
+       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+       font-weight: 500;
+  }
+  .section.stroke-properties {
+    margin: 0;
+  }
+  /* Original '+' button styles */
+  button#add-stop-btn {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.5rem;
+    margin-top:-0.2rem;
+    padding: 0;
+    color: var(--color-icons-darker);
+    font-weight: 300;
+    position: absolute;
+    right: .93rem;
+    height: 0px;
+    line-height: 0;
+    padding: 8px 3px 14px 3px;
+  }
+  button#remove-stop-btn {
+    background: none;
+    padding: 0;
+    display: flex;
+    left: .7rem;
+    font-size: 14px;
+    height: 1.4rem;
+    padding:0px 6px 0px 6px;
+    font-weight: 400;
+    position: relative;
+  }
+  button#add-stop-btn:hover, button#remove-stop-btn:hover, .settings:hover {
+      background-color: var(--color-form-background); /* Match other buttons */
+   }
+   #line-break-vertical {
+      width: 1px;
+          transform: translateX(-8px);
+      height: 23px;
+      position: relative;
+      background-color: var(--color-background);
+      margin-left: -3.1rem; /* Adjusted for spacing */
+   }
+  .current-stop-preview {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--color-secondary);
+    border-radius: 3px;
+    position: absolute;
+    margin-left: 13.4px;
+    cursor: pointer;
+  }
+  label[for="current-stop-alpha"] {
+  text-indent: -3;
+  color: var(--color-icons);
+  }
+    input[type="number"]#current-stop-alpha {
+      width: 2rem;
+      text-align: right;
+  }
+  .input-column {
+    gap:0.2rem; /* space between label and inputs/forms */
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Prevent overflow issues */
+  }
+  .section.top-controls {
+    padding: 0.4rem .8rem;
+  }
+  /*.input-row:not(:has(.label[for="stroke-weight"])) {
+    margin-top: .5rem;
+    margin-bottom: .2rem;
+  }*/
+  input#stroke-weight {}
+  .label[for="start-cap-value"], .label[for="end-cap-value"], .label#stroke-weight-label, .label[for="stroke-join-value"] { /* Updated selector for weight/join label */
+    color: var(--color-icons-darker);
+    font-size: 10.8px;
+    font-weight: 600;
+  }
+
+/* --- CSS Modifications (Targeted) --- */
+
+/* Keep options always visible ONLY for the join selector */
+.custom-select-wrapper.join-options-visible .select-items {
+  /* Change from absolute positioning */
+  position: static;
+  /* Remove dropdown-specific styles */
+  border: none;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  border-radius: 5px;
+  background-color: var(--color-form-background);
+  padding: 2px 0;
+  /* Remove height/overflow constraints */
+  max-height: none;
+  overflow-y: visible;
+  padding-inline-start: 2px;
+  padding-inline-end: 2px;
+  align-items: center;
+}
+.custom-select-wrapper.join-options-visible{
+  width: min-content;
+}
+/* Style the selected item ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-option.same-as-selected {
+   background-color: var(--color-background);
+   border-color: var(--color-primary);
+}
+
+/* Hide the original trigger box ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-selected {
+  display: none;
+}
+
+
+  /* --- Custom Select Styles --- */
+  .custom-select-wrapper {
+      position: relative;
+      min-width: 5.6rem;
+      font-size: 11.3px;
+      color: var(--color-icons-lighter);
+  }
+  .custom-select .select-selected {
+      background-color: var(--color-background);
+      padding: 5px 20px 5px 5px; /* Make space for arrow */
+      border: 1px solid var(--color-secondary);
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      padding-inline: 10.5px;
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+      position: relative; /* For arrow positioning */
+      min-height: 21.6px; /* Match input height */
+      outline: none;
+      box-sizing: border-box;
+      width: 100%; /* Make selected box take full wrapper width */
+  }
+  .custom-select .select-selected::after { /* Dropdown arrow */
+      content: "";
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-28%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--color-icons); /* Arrow color */
+  }
+  .custom-select .select-selected.select-arrow-active::after { /* Arrow when open */
+      border-top: none;
+      border-bottom: 4px solid var(--color-icons);
+  }
+  .custom-select .select-items {
+      position: absolute;
+      background-color: var(--color-background);
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 99;
+      border: 1px solid var(--color-secondary);
+      border-radius:3px;
+      max-height: 150px; /* Optional: scroll for long lists */
+      overflow-y: auto;
+      box-sizing: border-box;
+  }
+  .custom-select .select-hide {
+      display: none;
+  }
+  .custom-select .select-option {
+      color: var(--color-icons-lighter);
+      padding: 5px 8px;
+      padding-inline: .66rem;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+  }
+  /* Adjust icon size within options */
+  .custom-select .select-option svg {
+      width: 14px; /* Keep consistent */
+      height: 14px; /* Make square */
+      fill: none; /* Use stroke for join icons */
+      stroke: currentColor; /* Inherit text color for stroke */
+      stroke-width: 1.5; /* Adjust stroke width as needed */
+      flex-shrink: 0; /* Prevent icon shrinking */
+      margin-top: .8px;
+  }
+  /* Specific icon size for selected display */
+  .custom-select .select-selected svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      flex-shrink: 0;
+      margin-top: .8px;
+  }
+  /* Cap icons use fill, not stroke */
+   .custom-select .select-option svg.cap-icon,
+   .custom-select .select-selected svg.cap-icon {
+      fill: currentColor;
+      stroke: none;
+      height: 10px; /* Revert cap icons to original height */
+   }
+   /* Arrow Cap icons use stroke */
+   .custom-select .select-option svg.arrow-cap-icon,
+   .custom-select .select-selected svg.arrow-cap-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      height: 10px;
+   }
+   .custom-select .same-as-selected {
+      background-color: var(--color-primary-darkened);
+      /* border-bottom: 1px solid var(--color-secondary); */ /* Removed border */
+  }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):active, .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):focus {background-color: var(--color-secondary); }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):hover:not(:active):not(:focus) {background-color: var(--color-form-background); }
+  /* Hide the actual input used for storing the value */
+  .custom-select-wrapper input[type="hidden"] {
+      display: none;
+  }
+  .weight-icon{
+    position: absolute;
+    margin-top: 25px;
+    margin-left: 1px;
+    pointer-events: none; /* Make icon non-interactive */
+  }
+
+
+/* --- Custom Tooltip Styles --- */
+.select-option svg {z-index: 1;}
+/* Make the container relative for absolute positioning of the tooltip */
+.custom-select-wrapper.join-options-visible .select-option {
+  position: relative; /* Needed for tooltip positioning */
+  padding: .3rem .55rem;
+  border-radius: 3px;
+}
+
+.custom-tooltip {
+visibility: hidden; /* Hidden by default */
+opacity: 0; /* Fade effect */
+transition: opacity 0.2s ease-in-out; /* Smooth fade */
+position: absolute;
+bottom: 100%; /* Position above the element */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+background-color: var(--color-background); /* Use your theme colors */
+color: var(--color-icons-lighter);
+border:1px solid var(--color-secondary);
+text-align: center;
+padding: 3px 6px;
+border-radius: 4px;
+font-size: 10px; /* Adjust as needed */
+white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Show the tooltip on hover */
+.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip {
+visibility: visible;
+opacity: 1;
+}
+/* Outer border/arrow */
+.custom-tooltip::before {
+content: "";
+position: absolute;
+top: 100%; /* Position below the tooltip body */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+border-width: 7.25px; /* Slightly larger than ::after */
+border-style: solid;
+/* Outer border color (e.g., white) on top, rest transparent */
+border-color: var(--color-secondary) transparent transparent transparent;
+}
+/* Inner border/arrow */
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--color-background) transparent transparent transparent;
+}
+.stop-editor {
+  /*background-color: var(--color-primary-darkened);
+  border-color: var(--color-primary);*/
+  padding: 3px;
+  outline: none;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+div[data-value="ARROW_LINES"] {
+}
+div#end-stop {
+  margin-left: -2px;
+}
+
+.settings {
+  height: 20px;
+  padding: 4px;
+  border-radius: 6px;
+  position: fixed;
+  color: var(--color-icons-darker);
+  right: 16px;
+}
+.select-selected span {
+width: 50px;
+}
+.select-items span {
+width: min-content;
+}
+.custom-tooltip, .custom-tooltip::after, .custom-tooltip::before {overflow: visible!important;}
+.select-items span, .select-selected span {
+text-overflow: ellipsis;
+white-space: nowrap;
+overflow: hidden;
+}
+.custom-select-wrapper:has(input#start-cap-value) .custom-select, .custom-select-wrapper:has(input#end-cap-value) .custom-select {
+min-width: 6.5rem;
+}
+
+
+</style>       
+      </head>
+<body>
+  <div class="container">
+    <div class="section stroke-properties">
+      <div class="section top-controls">
+        <div class="input-row">
+          <div class="input-column">
+            <div class="label" for="stroke-weight" id="stroke-weight-label">Weight</div>
+            <svg class="weight-icon" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6 6.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5M7 10v1h10v-1zm-.25-1a.75.75 0 0 0-.75.75v1.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-1.5a.75.75 0 0 0-.75-.75zM7 17v-2h10v2zm-1-2.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75z" clip-rule="evenodd" fill="var(--color-icons-darker)"></path></svg>
+            <input type="number" id="stroke-weight" value="1" min="0" step="any" draggable="false">
+          </div>
+          <div class="input-column">      
+            <div class="label" for="stroke-join-value">Join</div>
+            <div class="input-row">
+            <div class="custom-select-wrapper join-options-visible">
+              <input type="hidden" id="stroke-join-value" value="ROUND">
+              <div class="custom-select">
+                 <div class="select-selected" tabindex="0" id="stroke-join-select">
+                   </div>
+                 <div class="select-items">
+                   <div class="select-option" data-value="ROUND">
+                    <span class="custom-tooltip">Round</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9.2" cy="9.1" r="0.1" fill="currentColor"/>
+                      <circle cx="8.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.7" cy="9" r="0.1" fill="currentColor"/>
+                      <circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.8"/>
+                      </svg>
+                   </div>
+                   <div class="select-option" data-value="MITER">
+                    <span class="custom-tooltip">Miter</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <circle cx="8.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <path d="M1 13V1H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/>
+                      </svg>
+                   </div>
+                   <div class="select-option" data-value="BEVEL">
+                    <span class="custom-tooltip">Bevel</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8.5" cy="8.5" r="0.1" fill="currentColor"/>
+                      <circle cx="12.5" cy="7.5" r="0.1" fill="currentColor"/>
+                      <circle cx="7.5" cy="12.5" r="0.1" fill="currentColor"/>
+                      <path d="M13 1H7.24L1 8.2V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                   </div>
+                 </div>
+              </div>
+            </div>
+                          
+            <div class="settings">
+              <svg width="20" height="20" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 8.75C8.4665 8.75 9.25 7.9665 9.25 7C9.25 6.0335 8.4665 5.25 7.5 5.25C6.5335 5.25 5.75 6.0335 5.75 7C5.75 7.9665 6.5335 8.75 7.5 8.75Z" stroke="currentColor" stroke-width="1"/>
+                <path d="M8.52961 1.2558C8.31518 1.16699 8.0434 1.16699 7.49979 1.16699C6.95619 1.16699 6.68441 1.16699 6.46998 1.2558C6.18413 1.37421 5.95701 1.60133 5.8386 1.88719C5.78454 2.01769 5.76339 2.16945 5.75511 2.39082C5.74295 2.71614 5.57611 3.01726 5.29418 3.18003C5.01225 3.3428 4.66806 3.33672 4.38024 3.1846C4.18439 3.08108 4.04238 3.02352 3.90234 3.00509C3.59557 2.9647 3.28532 3.04783 3.03984 3.23619C2.85573 3.37746 2.71983 3.61285 2.44803 4.08362C2.17623 4.55439 2.04033 4.78977 2.01004 5.01986C1.96966 5.32663 2.05279 5.63688 2.24115 5.88237C2.32712 5.99443 2.44795 6.08858 2.63549 6.20641C2.91118 6.37966 3.08856 6.67477 3.08855 7.00033C3.08853 7.32588 2.91115 7.62093 2.63548 7.79413C2.44792 7.91202 2.32707 8.00623 2.24109 8.11828C2.05273 8.36375 1.9696 8.67397 2.00999 8.98074C2.04027 9.21081 2.17617 9.44624 2.44797 9.91699C2.71977 10.3877 2.85567 10.6232 3.03978 10.7644C3.28526 10.9528 3.59551 11.0359 3.90228 10.9955C4.04231 10.9771 4.18431 10.9195 4.38015 10.816C4.66799 10.6639 5.0122 10.6578 5.29415 10.8206C5.5761 10.9834 5.74295 11.2845 5.75511 11.6099C5.76339 11.8312 5.78454 11.983 5.8386 12.1135C5.95701 12.3993 6.18413 12.6265 6.46998 12.7449C6.68441 12.8337 6.95619 12.8337 7.49979 12.8337C8.0434 12.8337 8.31518 12.8337 8.52961 12.7449C8.81544 12.6265 9.04259 12.3993 9.16095 12.1135C9.21503 11.983 9.2362 11.8312 9.24449 11.6098C9.25662 11.2845 9.42345 10.9834 9.70538 10.8206C9.9873 10.6578 10.3315 10.6639 10.6194 10.816C10.8152 10.9195 10.9572 10.977 11.0972 10.9955C11.404 11.0359 11.7143 10.9528 11.9597 10.7644C12.1438 10.6231 12.2797 10.3877 12.5515 9.91693C12.8234 9.44618 12.9593 9.21081 12.9895 8.98074C13.0299 8.67397 12.9468 8.36369 12.7584 8.11823C12.6724 8.00617 12.5516 7.91196 12.364 7.79413C12.0884 7.62093 11.911 7.32583 11.911 7.00027C11.911 6.67471 12.0884 6.37972 12.364 6.20653C12.5516 6.08863 12.6725 5.99448 12.7585 5.88237C12.9468 5.63692 13.03 5.32667 12.9896 5.01989C12.9593 4.78981 12.8234 4.55443 12.5516 4.08366C12.2798 3.61289 12.1439 3.3775 11.9598 3.23623C11.7143 3.04787 11.404 2.96474 11.0973 3.00513C10.9573 3.02356 10.8153 3.08112 10.6194 3.18463C10.3316 3.33675 9.98736 3.34284 9.70544 3.18005C9.42345 3.01727 9.25662 2.71613 9.24449 2.39079C9.2362 2.16944 9.21503 2.01768 9.16095 1.88719C9.04259 1.60133 8.81544 1.37421 8.52961 1.2558Z" stroke="currentColor" stroke-width="1.25"/>
+                </svg></div>
+
+            </div> 
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-column">
+            <div class="label" for="start-cap-value">Start point</div>
+            <div class="custom-select-wrapper">
+              <input type="hidden" id="start-cap-value" value="ROUND">
+              <div class="custom-select">
+                 <div class="select-selected" tabindex="0" id="start-cap-select">
+                   </div>
+                 <div class="select-items select-hide">
+                   <div class="select-option" data-value="ROUND">
+                     <svg class="cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H5C3.67392 0 2.40215 0.526784 1.46447 1.46447C0.526784 2.40215 0 3.67392 0 5C0 6.32608 0.526784 7.59785 1.46447 8.53553C2.40215 9.47322 3.67392 10 5 10H13.5C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H5C3.93913 9 2.92172 8.57857 2.17157 7.82843C1.42143 7.07828 1 6.06087 1 5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5Z" fill="currentColor"/></svg>
+                     <span>Round</span>
+                   </div>
+                   <div class="select-option" data-value="SQUARE">
+                       <svg class="cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 10C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H1V1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H0.5C0.367392 0 0.240215 0.0526785 0.146447 0.146447C0.0526785 0.240215 0 0.367392 0 0.5V9.5C0 9.63261 0.0526785 9.75979 0.146447 9.85355C0.240215 9.94732 0.367392 10 0.5 10H13.5Z" fill="currentColor"/></svg>
+                       <span>Square</span>
+                   </div>
+                   <div class="select-option" data-value="ARROW_LINES">
+                       <svg class="arrow-cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M1 5H10" stroke="currentColor"/>
+                         <path d="M7 1.5L10.5 5L7 8.5" stroke="currentColor"/>
+                       </svg>
+                       <span>Line Arrow</span>
+                   </div>
+                   <div class="select-option" data-value="ARROW_EQUILATERAL">
+                       <svg class="arrow-cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M1 5H10" stroke="currentColor"/>
+                         <path d="M7 1L11 5L7 9L7 1Z" stroke="currentColor" fill="currentColor"/>
+                       </svg>
+                       <span>Triangle Arrow</span>
+                   </div>
+               </div>
+              </div>
+            </div>
+          </div>
+          <div class="input-column">
+            <div class="label" for="end-cap-value">End point</div>
+            <div class="custom-select-wrapper">
+               <input type="hidden" id="end-cap-value" value="ROUND">
+               <div class="custom-select">
+                  <div class="select-selected" tabindex="0" id="end-cap-select">
+                    </div>
+                  <div class="select-items select-hide">
+                      <div class="select-option" data-value="ROUND">
+                        <svg class="cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H5C3.67392 0 2.40215 0.526784 1.46447 1.46447C0.526784 2.40215 0 3.67392 0 5C0 6.32608 0.526784 7.59785 1.46447 8.53553C2.40215 9.47322 3.67392 10 5 10H13.5C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H5C3.93913 9 2.92172 8.57857 2.17157 7.82843C1.42143 7.07828 1 6.06087 1 5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5Z" fill="currentColor"/></svg>
+                        <span>Round</span>
+                      </div>
+                      <div class="select-option" data-value="SQUARE">
+                          <svg class="cap-icon" style="transform: scaleX(-1)" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 10C13.6326 10 13.7598 9.94732 13.8536 9.85355C13.9473 9.75979 14 9.63261 14 9.5C14 9.36739 13.9473 9.24021 13.8536 9.14645C13.7598 9.05268 13.6326 9 13.5 9H1V1H13.5C13.6326 1 13.7598 0.947321 13.8536 0.853553C13.9473 0.759785 14 0.632608 14 0.5C14 0.367392 13.9473 0.240215 13.8536 0.146447C13.7598 0.0526785 13.6326 0 13.5 0H0.5C0.367392 0 0.240215 0.0526785 0.146447 0.146447C0.0526785 0.240215 0 0.367392 0 0.5V9.5C0 9.63261 0.0526785 9.75979 0.146447 9.85355C0.240215 9.94732 0.367392 10 0.5 10H13.5Z" fill="currentColor"/></svg>
+                          <span>Square</span>
+                      </div>
+                      <div class="select-option" data-value="ARROW_LINES">
+                          <svg class="arrow-cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 5H10" stroke="currentColor"/>
+                            <path d="M7 1.5L10.5 5L7 8.5" stroke="currentColor"/>
+                          </svg>
+                          <span>Line Arrow</span>
+                      </div>
+                      <div class="select-option" data-value="ARROW_EQUILATERAL">
+                          <svg class="arrow-cap-icon" width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 5H10" stroke="currentColor"/>
+                            <path d="M7 1L11 5L7 9L7 1Z" stroke="currentColor" fill="currentColor"/>
+                          </svg>
+                          <span>Triangle Arrow</span>
+                      </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="gradient-container">
+          <div class="gradient-bar" id="gradient-bar"></div>
+          <div class="color-stops" id="color-stops">
+            <div class="color-stop" id="start-stop" data-position="0" data-is-endpoint="true">
+              <div class="color-preview" id="start-preview" style="background: #ff0000"></div>
+              <input type="color" id="start-color" value="#ff0000">
+            </div>
+            <div class="color-stop" id="end-stop" data-position="100" data-is-endpoint="true">
+              <div class="color-preview" id="end-preview" style="background: #0000ff"></div>
+              <input type="color" id="end-color" value="#0000ff">
+            </div>
+            </div>
+        </div>
+
+        <div class="stops-panel">
+          <div class="stops-panel-header">
+            <div class="label">Stops</div>
+            <button id="add-stop-btn">+</button>
+          </div>
+          <div class="stop-editor">
+            <div class="input-row">
+               <input type="text" id="current-stop-position" value="0%" min="0" max="100" step="1">
+               </div>
+            <div class="input-row color-selection">
+              <div class="current-stop-preview" id="current-stop-color-preview"></div>
+              <input type="text" id="current-stop-color" value="#ff0000">
+              <div id="line-break-vertical"></div>
+              <input type="number" id="current-stop-alpha" value="100" min="0" max="100" step="1">
+              <label for="current-stop-alpha">%</label>
+            </div>
+            <button id="remove-stop-btn">—</button>
+          </div>
+        </div>
+      </div>
+      <button onclick="applyGradient()">Apply</button>
+    </div>
+   <script>
         // --- DOM Element References ---
         const startColorInput = document.getElementById('start-color');
       const endColorInput = document.getElementById('end-color');
@@ -1129,3 +1844,7 @@
               // Position is handled separately by positionStops/updateGradient
           }
       }
+
+   </script> 
+</body>
+</html>

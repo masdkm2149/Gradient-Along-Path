@@ -1,8 +1,602 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="ui.css">
-        <script src="./ui.js"></script>
+<style>
+     /* --- Existing styles --- */
+     :root {
+    --color-primary: #0078ce; /* Figma blue */
+    --color-primary-darkened: #275F88; /* Darker blue */
+    --color-secondary: #383838; /* Dark gray */
+    --color-form-background: #2C2C2C; /* Border color */
+    --color-background: #1E1E1E; /* Slightly less dark gray */
+    --color-icons-lighter: #e9e9e9; /* Dark gray */
+    --color-icons: #dddddd; /* Darker gray */
+     --color-icons-darker: #bbbbbb; /* Light gray for icons */
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11.3px;
+    padding: 8px;
+    margin: 0;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    overflow-y: visible;
+    background: var(--color-background); /* Figma's dark background */
+    color: #FFFFFF; /* White text */
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .label {
+    font-weight: 500;
+    font-size: 11.3px;
+    color: var(--color-icons);
+    margin-bottom: 4px;
+  }
+  /* Style for draggable weight label (visual cue) */
+  .label#stroke-weight-label {
+      user-select: none; /* Prevent text selection */
+  }
+
+  .input-row {
+    display: flex;
+    align-items: top;
+    gap: 8px;
+  }
+
+  .input-row.color-selection {
+    left:0;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  /* Base styles for number and text inputs */
+  input[type="number"], input[type="text"] {
+    padding: 4px;
+    border: 1px solid var(--color-secondary); /* Darker border */
+    font-size: 11.3px;
+    background: var(--color-form-background); /* Dark input background */
+    color: var(--color-icons);
+    border-radius: 5px; /* Moved border-radius here */
+  }
+  /* Default width for number inputs */
+  input[type="number"] {
+      width: 3.5rem;
+  }
+  input[type="text"].stop-color {
+    margin-left: 8px;
+    text-indent: -7px;
+    margin-inline-end: 3px;
+    padding-left: 23px;
+    width: 96%;
+  }
+
+  /* Default width for text inputs (like hex color) */
+  input[type="number"]#stroke-weight {
+    width: 4.5rem;
+    padding: 5px;
+    text-indent: 19px;
+    user-select: none; /* Keep: Prevent text selection during drag */
+  }
+  /* *** ADDED: Specific style for the position text input *** */
+  input[type="text"].stop-position {
+      width: 3rem; /* Match original number input width */
+      font-size: 11.3px;
+      padding-inline: 0.5rem;
+      color: var(--color-icons);
+  }
+  ::selection {
+    background-color: var(--color-primary-darkened);
+  }
+  /* Input focus styles */
+  input[type="number"].stop-alpha:focus, input[type="number"].stop-alpha {
+    box-shadow: none;
+    border: none;
+  }
+
+  input.stop-position:focus, button:not(.remove-stop-btn):not(#add-stop-btn):focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input.stop-color:focus, .input-row.color-selection:has(input.stop-alpha:focus) input.stop-color , input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary); /* Blue outline on focus */
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+   /* Style only the remaining standard select */
+  /* select#stroke-join removed */
+
+  .gradient-container {
+    position: relative;
+    height: 3rem;
+    width: 90%;
+    margin: 1rem auto 0.5rem auto;
+  }
+  .gradient-bar {
+    height: 2rem;
+    z-index: 5;
+    width: 100%;
+    background: linear-gradient(to right, #ff0000, #0000ff);
+    border: 1.5px solid var(--color-secondary);
+    border-radius: .33rem;
+    position: absolute;
+    top: 1rem;
+    cursor: pointer; /* Add cursor pointer to indicate clickable area */
+  }
+  .color-stops {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .color-stop {
+    position: absolute;
+    transform: translate(-50%, -9px);
+    z-index: 10;
+  }
+  .color-preview-container {
+    width: 16px;
+    z-index: -1;
+    height: 16px;
+    border: 5px solid var(--color-secondary);
+    background-color: var(--color-secondary);
+    border-radius: 20%;
+    cursor:pointer;
+    position: relative;
+  }
+  .color-preview {
+    height: 16px;
+    position: static;
+    border-radius: 3px;
+  }
+  
+  .color-preview::after {outline: none;border-top-left-radius:3px;border-bottom-left-radius:3px;}
+  .color-preview::before {
+    width: 0.5rem;
+    outline: none;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    left: 50%;
+}
+  .selected .color-preview-container {
+    cursor:grab; /* Change cursor to indicate selected state */
+    border-color: var(--color-primary); /* Highlight selected stop */
+    background-color: var(--color-primary); /* Highlight selected stop */
+}
+  .color-preview-container:active {
+    cursor: grabbing;
+  }
+  .color-preview-container::after {
+    content: "";
+    box-sizing: border-box;
+    border: 6px solid transparent;
+    border-top-color: var(--color-secondary);
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translate(-50%);
+  }
+  .color-preview::after {
+    content: "";
+    width: .5rem;
+    height: 1rem;
+    position: absolute;
+    background: var(--background);
+  }
+  
+  .color-preview::before {
+    content: "";
+    height: 1rem;
+    z-index: -1;
+    position: absolute;
+    background: var(--before-background);
+  }
+  .selected .color-preview-container::after {
+    border-top-color: var(--color-primary); /* Highlight selected stop arrow */
+  }
+  input[type="color"] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    margin-left: 20px;
+    position: absolute;
+  }
+  button {
+    background: var(--color-secondary);
+    color: var(--color-icons);
+    border: none;
+    border-radius: 6px;
+    font-size: 11.5px;
+    cursor: pointer;
+    width: fit-content;
+    padding: 0.5rem 2rem;
+    margin: auto;
+    text-align: center;
+  }
+
+  /* Original styles for the stops editor panel */
+  .stops-panel {
+    margin: 0;
+    padding: 0.65rem;
+
+  }
+  .stops-panel-header {
+    display: flex;
+    flex-direction: row;
+    margin-left: 1.5px;
+    margin-bottom: .5rem;
+    justify-content: space-between;
+  }
+  button#add-stop-btn, button.remove-stop-btn {
+    padding: 2px 6px;
+    background: none;
+    font-size: 18px;
+  }
+  button:hover {
+    background-color: var(--color-form-background);
+  }
+  button#add-stop-btn:active, button#add-stop-btn:active:focus, button#add-stop-btn:active:hover, button.remove-stop-btn:active, button.remove-stop-btn:active:focus, button.remove-stop-btn:not(:disabled):hover:active {
+    background-color: var(--color-secondary);
+  }
+  .stop-editor {
+    display: flex;
+    align-items: center;
+    margin: 0.25rem 0;
+    padding: 3px 9px 3px 3px;
+    outline: none;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid transparent;
+  }
+  * {
+       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+       font-weight: 500;
+  }
+  .section.stroke-properties {
+    margin: 0;
+  }
+  /* Original '+' button styles */
+  button#add-stop-btn {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.6rem;
+    margin-top:-0.2rem;
+    padding: 0;
+    color: var(--color-icons-darker);
+    font-weight: 300;
+    position: absolute;
+    right: 1.7rem;
+    height: 0px;
+    line-height: 0;
+    padding: 8px 3px 14px 3px;
+  }
+  button.remove-stop-btn {
+    background: none;
+    padding: 0;
+    display: flex;
+    left: 5px;
+    font-size: 14px;
+    height: 1.4rem;
+    padding:0px 6px 0px 6px;
+    font-weight: 400;
+    position: relative;
+  }
+  /* Style for disabled remove button */
+  button.remove-stop-btn:disabled {
+    color: var(--color-secondary); /* Make it less prominent */
+    cursor: not-allowed; /* Indicate it's not clickable */
+    background-color: transparent; /* Ensure no hover effect */
+  }
+  button#add-stop-btn:hover, button.remove-stop-btn:not(:disabled):hover, .settings:hover {
+      background-color: var(--color-form-background); /* Match other buttons */
+   }
+   .line-break-vertical {
+      width: 1px;
+      transform: translateX(-5px);
+      height: 23px;
+      position: relative;
+      background-color: var(--color-background);
+      margin-left: -3.1rem; /* Adjusted for spacing */
+   }
+  .current-stop-preview {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--color-secondary);
+    border-radius: 3px;
+    position: absolute;
+    margin-left: 13.4px;
+    cursor: pointer;
+  }
+  label[for="stop-alpha"] {
+  text-indent: -3;
+  color: var(--color-icons);
+  }
+    input[type="number"].stop-alpha {
+      width: 2rem;
+      text-align: right;
+  }
+  .input-column {
+    gap:0.2rem; /* space between label and inputs/forms */
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Prevent overflow issues */
+  }
+  .section.top-controls {
+    padding: 0.4rem .8rem;
+  }
+  /*.input-row:not(:has(.label[for="stroke-weight"])) {
+    margin-top: .5rem;
+    margin-bottom: .2rem;
+  }*/
+  input#stroke-weight {}
+  .label[for="start-cap-value"], .label[for="end-cap-value"], .label#stroke-weight-label, .label[for="stroke-join-value"] { /* Updated selector for weight/join label */
+    color: var(--color-icons-darker);
+    font-size: 10.8px;
+    font-weight: 600;
+  }
+
+/* --- CSS Modifications (Targeted) --- */
+
+/* Keep options always visible ONLY for the join selector */
+.custom-select-wrapper.join-options-visible .select-items {
+  /* Change from absolute positioning */
+  position: static;
+  /* Remove dropdown-specific styles */
+  border: none;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  border-radius: 5px;
+  background-color: var(--color-form-background);
+  padding: 2px 0;
+  /* Remove height/overflow constraints */
+  max-height: none;
+  overflow-y: visible;
+  padding-inline-start: 2px;
+  padding-inline-end: 2px;
+  align-items: center;
+}
+.custom-select-wrapper.join-options-visible{
+  width: min-content;
+}
+/* Style the selected item ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-option.same-as-selected {
+   background-color: var(--color-background);
+   border-color: var(--color-primary);
+}
+
+/* Hide the original trigger box ONLY for join selector */
+.custom-select-wrapper.join-options-visible .select-selected {
+  display: none;
+}
+
+.all-stops {
+    display: flex;
+    flex-direction: column;
+}
+
+  /* --- Custom Select Styles --- */
+  .custom-select-wrapper {
+      position: relative;
+      min-width: 5.6rem;
+      font-size: 11.3px;
+      color: var(--color-icons-lighter);
+  }
+  .custom-select .select-selected {
+      background-color: var(--color-background);
+      padding: 5px 20px 5px 5px; /* Make space for arrow */
+      border: 1px solid var(--color-secondary);
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      padding-inline: 10.5px;
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+      position: relative; /* For arrow positioning */
+      min-height: 21.6px; /* Match input height */
+      outline: none;
+      box-sizing: border-box;
+      width: 100%; /* Make selected box take full wrapper width */
+  }
+  .custom-select .select-selected::after { /* Dropdown arrow */
+      content: "";
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-28%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--color-icons); /* Arrow color */
+  }
+  .custom-select .select-selected.select-arrow-active::after { /* Arrow when open */
+      border-top: none;
+      border-bottom: 4px solid var(--color-icons);
+  }
+  .custom-select .select-items {
+      position: absolute;
+      background-color: var(--color-background);
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 99;
+      border: 1px solid var(--color-secondary);
+      border-radius:3px;
+      max-height: 150px; /* Optional: scroll for long lists */
+      overflow-y: auto;
+      box-sizing: border-box;
+  }
+  .custom-select .select-hide {
+      display: none;
+  }
+  .custom-select .select-option {
+      color: var(--color-icons-lighter);
+      padding: 5px 8px;
+      padding-inline: .66rem;
+      cursor: pointer;
+      display: flex; /* Use flex for icon alignment */
+      align-items: center; /* Center items vertically */
+      gap: 6px; /* Space between icon and text */
+  }
+  /* Adjust icon size within options */
+  .custom-select .select-option svg {
+      width: 14px; /* Keep consistent */
+      height: 14px; /* Make square */
+      fill: none; /* Use stroke for join icons */
+      stroke: currentColor; /* Inherit text color for stroke */
+      stroke-width: 1.5; /* Adjust stroke width as needed */
+      flex-shrink: 0; /* Prevent icon shrinking */
+      margin-top: .8px;
+  }
+  /* Specific icon size for selected display */
+  .custom-select .select-selected svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      flex-shrink: 0;
+      margin-top: .8px;
+  }
+  /* Cap icons use fill, not stroke */
+   .custom-select .select-option svg.cap-icon,
+   .custom-select .select-selected svg.cap-icon {
+      fill: currentColor;
+      stroke: none;
+      height: 10px; /* Revert cap icons to original height */
+   }
+   /* Arrow Cap icons use stroke */
+   .custom-select .select-option svg.arrow-cap-icon,
+   .custom-select .select-selected svg.arrow-cap-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      height: 10px;
+   }
+   .custom-select .same-as-selected {
+      background-color: var(--color-primary-darkened);
+      /* border-bottom: 1px solid var(--color-secondary); */ /* Removed border */
+  }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):active, .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):focus {background-color: var(--color-secondary); }
+  .custom-select:not(.same-as-selected) .select-option:not(.same-as-selected):hover:not(:active):not(:focus) {background-color: var(--color-form-background); }
+  /* Hide the actual input used for storing the value */
+  .custom-select-wrapper input[type="hidden"] {
+      display: none;
+  }
+  .weight-icon{
+    position: absolute;
+    margin-top: 25px;
+    margin-left: 1px;
+    pointer-events: none; /* Make icon non-interactive */
+  }
+
+
+/* --- Custom Tooltip Styles --- */
+.select-option svg {z-index: 1;}
+/* Make the container relative for absolute positioning of the tooltip */
+.custom-select-wrapper.join-options-visible .select-option {
+  position: relative; /* Needed for tooltip positioning */
+  padding: .3rem .55rem;
+  border-radius: 3px;
+}
+
+.custom-tooltip {
+visibility: hidden; /* Hidden by default */
+opacity: 0; /* Fade effect */
+transition: opacity 0.2s ease-in-out; /* Smooth fade */
+position: absolute;
+bottom: 100%; /* Position above the element */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+background-color: var(--color-background); /* Use your theme colors */
+color: var(--color-icons-lighter);
+border:1px solid var(--color-secondary);
+text-align: center;
+padding: 3px 6px;
+border-radius: 4px;
+font-size: 10px; /* Adjust as needed */
+white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Show the tooltip on hover */
+.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip {
+visibility: visible;
+opacity: 1;
+}
+/* Outer border/arrow */
+.custom-tooltip::before {
+content: "";
+position: absolute;
+top: 100%; /* Position below the tooltip body */
+left: 50%;
+transform: translateX(-50%); /* Center horizontally */
+border-width: 7.25px; /* Slightly larger than ::after */
+border-style: solid;
+/* Outer border color (e.g., white) on top, rest transparent */
+border-color: var(--color-secondary) transparent transparent transparent;
+}
+/* Inner border/arrow */
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--color-background) transparent transparent transparent;
+}
+/* Style for selected stop editor */
+.stop-editor.selected { background-color: #0078ce52; border-radius: 7px; border: 1px solid var(--color-primary); }
+
+.stop-editor.selected:has(input:focus) {
+background-color: #0078ce0a;    
+border-color: #0078ce1c;
+}
+
+.stop-editor.selected:has(button:focus) button { box-shadow: none;}
+
+.stop-editor.selected:has(button.remove-stop-btn:not(:disabled):active) button, 
+.stop-editor.selected:has(button.remove-stop-btn:not(:disabled):active:hover) button { background-color: #00000060;}
+.stop-editor.selected:has(button.remove-stop-btn:not(:disabled):hover) button { background-color: #00000030;}
+
+div[data-value="ARROW_LINES"] {
+}
+div#end-stop {
+  margin-left: -2px;
+}
+
+.settings {
+  height: 20px;
+  padding: 4px;
+  border-radius: 6px;
+  position: fixed;
+  color: var(--color-icons-darker);
+  right: 16px;
+}
+.select-selected span {
+width: 50px;
+}
+.select-items span {
+width: min-content;
+}
+.custom-tooltip, .custom-tooltip::after, .custom-tooltip::before {overflow: visible!important;}
+.select-items span, .select-selected span {
+text-overflow: ellipsis;
+white-space: nowrap;
+overflow: hidden;
+}
+.custom-select-wrapper:has(input#start-cap-value) .custom-select, .custom-select-wrapper:has(input#end-cap-value) .custom-select {
+min-width: 6.5rem;
+}
+
+
+</style>
       </head>
 <body>
   <div class="container">
@@ -14,7 +608,7 @@
             <svg class="weight-icon" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6 6.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5M7 10v1h10v-1zm-.25-1a.75.75 0 0 0-.75.75v1.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-1.5a.75.75 0 0 0-.75-.75zM7 17v-2h10v2zm-1-2.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75z" clip-rule="evenodd" fill="var(--color-icons-darker)"></path></svg>
             <input type="number" id="stroke-weight" value="1" min="0" step="any" draggable="false">
           </div>
-          <div class="input-column">      
+          <div class="input-column">
             <div class="label" for="stroke-join-value">Join</div>
             <div class="input-row">
             <div class="custom-select-wrapper join-options-visible">
@@ -53,14 +647,14 @@
                  </div>
               </div>
             </div>
-                          
+
             <div class="settings">
               <svg width="20" height="20" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.5 8.75C8.4665 8.75 9.25 7.9665 9.25 7C9.25 6.0335 8.4665 5.25 7.5 5.25C6.5335 5.25 5.75 6.0335 5.75 7C5.75 7.9665 6.5335 8.75 7.5 8.75Z" stroke="currentColor" stroke-width="1"/>
                 <path d="M8.52961 1.2558C8.31518 1.16699 8.0434 1.16699 7.49979 1.16699C6.95619 1.16699 6.68441 1.16699 6.46998 1.2558C6.18413 1.37421 5.95701 1.60133 5.8386 1.88719C5.78454 2.01769 5.76339 2.16945 5.75511 2.39082C5.74295 2.71614 5.57611 3.01726 5.29418 3.18003C5.01225 3.3428 4.66806 3.33672 4.38024 3.1846C4.18439 3.08108 4.04238 3.02352 3.90234 3.00509C3.59557 2.9647 3.28532 3.04783 3.03984 3.23619C2.85573 3.37746 2.71983 3.61285 2.44803 4.08362C2.17623 4.55439 2.04033 4.78977 2.01004 5.01986C1.96966 5.32663 2.05279 5.63688 2.24115 5.88237C2.32712 5.99443 2.44795 6.08858 2.63549 6.20641C2.91118 6.37966 3.08856 6.67477 3.08855 7.00033C3.08853 7.32588 2.91115 7.62093 2.63548 7.79413C2.44792 7.91202 2.32707 8.00623 2.24109 8.11828C2.05273 8.36375 1.9696 8.67397 2.00999 8.98074C2.04027 9.21081 2.17617 9.44624 2.44797 9.91699C2.71977 10.3877 2.85567 10.6232 3.03978 10.7644C3.28526 10.9528 3.59551 11.0359 3.90228 10.9955C4.04231 10.9771 4.18431 10.9195 4.38015 10.816C4.66799 10.6639 5.0122 10.6578 5.29415 10.8206C5.5761 10.9834 5.74295 11.2845 5.75511 11.6099C5.76339 11.8312 5.78454 11.983 5.8386 12.1135C5.95701 12.3993 6.18413 12.6265 6.46998 12.7449C6.68441 12.8337 6.95619 12.8337 7.49979 12.8337C8.0434 12.8337 8.31518 12.8337 8.52961 12.7449C8.81544 12.6265 9.04259 12.3993 9.16095 12.1135C9.21503 11.983 9.2362 11.8312 9.24449 11.6098C9.25662 11.2845 9.42345 10.9834 9.70538 10.8206C9.9873 10.6578 10.3315 10.6639 10.6194 10.816C10.8152 10.9195 10.9572 10.977 11.0972 10.9955C11.404 11.0359 11.7143 10.9528 11.9597 10.7644C12.1438 10.6231 12.2797 10.3877 12.5515 9.91693C12.8234 9.44618 12.9593 9.21081 12.9895 8.98074C13.0299 8.67397 12.9468 8.36369 12.7584 8.11823C12.6724 8.00617 12.5516 7.91196 12.364 7.79413C12.0884 7.62093 11.911 7.32583 11.911 7.00027C11.911 6.67471 12.0884 6.37972 12.364 6.20653C12.5516 6.08863 12.6725 5.99448 12.7585 5.88237C12.9468 5.63692 13.03 5.32667 12.9896 5.01989C12.9593 4.78981 12.8234 4.55443 12.5516 4.08366C12.2798 3.61289 12.1439 3.3775 11.9598 3.23623C11.7143 3.04787 11.404 2.96474 11.0973 3.00513C10.9573 3.02356 10.8153 3.08112 10.6194 3.18463C10.3316 3.33675 9.98736 3.34284 9.70544 3.18005C9.42345 3.01727 9.25662 2.71613 9.24449 2.39079C9.2362 2.16944 9.21503 2.01768 9.16095 1.88719C9.04259 1.60133 8.81544 1.37421 8.52961 1.2558Z" stroke="currentColor" stroke-width="1.25"/>
                 </svg></div>
 
-            </div> 
+            </div>
           </div>
         </div>
 
@@ -140,12 +734,12 @@
         <div class="gradient-container">
           <div class="gradient-bar" id="gradient-bar"></div>
           <div class="color-stops" id="color-stops">
-            <div class="color-stop" id="start-stop" data-position="0" data-is-endpoint="true">
-              <div class="color-preview" id="start-preview" style="background: #ff0000"></div>
+            <div class="color-stop selected" id="start-stop" data-position="0" data-is-endpoint="true">
+              <div class="color-preview-container" id="start-preview"><div class="color-preview" style="background: var(--after-background)"></div></div>
               <input type="color" id="start-color" value="#ff0000">
             </div>
             <div class="color-stop" id="end-stop" data-position="100" data-is-endpoint="true">
-              <div class="color-preview" id="end-preview" style="background: #0000ff"></div>
+              <div class="color-preview-container" id="end-preview"><div class="color-preview" style="background: var(--after-background)"></div></div>
               <input type="color" id="end-color" value="#0000ff">
             </div>
             </div>
@@ -156,22 +750,1509 @@
             <div class="label">Stops</div>
             <button id="add-stop-btn">+</button>
           </div>
-          <div class="stop-editor">
-            <div class="input-row">
-               <input type="text" id="current-stop-position" value="0%" min="0" max="100" step="1">
-               </div>
-            <div class="input-row color-selection">
-              <div class="current-stop-preview" id="current-stop-color-preview"></div>
-              <input type="text" id="current-stop-color" value="#ff0000">
-              <div id="line-break-vertical"></div>
-              <input type="number" id="current-stop-alpha" value="100" min="0" max="100" step="1">
-              <label for="current-stop-alpha">%</label>
-            </div>
-            <button id="remove-stop-btn">—</button>
           </div>
-        </div>
       </div>
       <button onclick="applyGradient()">Apply</button>
     </div>
+   <script>
+// --- DOM Element References ---
+const startColorInput = document.getElementById('start-color');
+const endColorInput = document.getElementById('end-color');
+const startPreview = document.getElementById('start-preview');
+const endPreview = document.getElementById('end-preview');
+const gradientBar = document.getElementById('gradient-bar');
+const colorStops = document.getElementById('color-stops'); // Container for all stop elements
+const startStop = document.getElementById('start-stop');   // Start stop element
+const endStop = document.getElementById('end-stop');       // End stop element
+
+// Panel elements - will be dynamically created per stop
+const addStopBtn = document.getElementById('add-stop-btn');
+const allStopsContainer = document.createElement('div'); // Container for all stop editors
+allStopsContainer.className = 'all-stops';
+document.querySelector('.stops-panel').appendChild(allStopsContainer); // Add to your panel section
+
+
+// Stroke Weight Elements
+const strokeWeightInput = document.getElementById('stroke-weight');
+const strokeWeightLabel = document.getElementById('stroke-weight-label'); // Reference for potential future use
+
+// --- State Variables ---
+
+// Gradient stops data model
+let stops = [
+  { id: 'start-stop', position: 0, color: '#ff0000', alpha: 1, isEndpoint: true },
+  { id: 'end-stop', position: 100, color: '#0000ff', alpha: 1, isEndpoint: true }
+];
+let selectedStopId = null; // ID of the currently selected stop
+const baseWidth = 258; // Base width of the UI
+const baseHeight = 318; // Base height of the UI (without stops)
+const heightPerStop = 41; // Height per stop (adjust this based on your UI design)
+
+// Color stop dragging state
+let isDragging = false;        // Is a color stop being dragged?
+let activeDragElement = null; // The DOM element being dragged
+let dragStartX, dragStartLeft; // Initial position during drag start
+
+// Stroke weight dragging state
+let isDraggingWeight = false;       // Is the stroke weight being dragged?
+let weightDragStartX = 0;         // Initial mouse X position for weight drag
+let weightDragLastX = 0;          // Last mouse X position during weight drag
+let weightDragCurrentValue = 0;   // Current weight value during drag
+let weightDragEngaged = false;    // Has the cursor changed to indicate dragging?
+let weightScalingActive = false;  // Has the value scaling started (moved enough)?
+
+
+// --- Initialization ---
+
+// Initial setup on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeCustomSelects(); // Set up custom dropdowns
+    setupInitialStopHandlers(); // Attach handlers to start/end stops
+    positionStops();           // Position initial stops correctly
+    createAllStopEditors();    // Create editor for each stop
+    updateGradient();          // Render the initial gradient bar (this now calls updateRemoveButtonStates)
+    selectStop('start-stop');  // Select the start stop by default
+    setupWeightDragListeners(); // Add listeners for weight input dragging
+    setupKeyboardListeners();   // Add global keyboard listeners (delete)
+    setupGradientBarClickListener(); // Listener for gradient bar clicks
+    updateRemoveButtonStates(); // Set initial button states
+});
+
+// Close custom selects when clicking outside
+document.addEventListener("click", closeAllSelect);
+
+// Handle window resize
+window.addEventListener('resize', () => {
+   positionStops();
+   updateGradient(); // Redraw gradient as bar width changes
+});
+
+
+// --- Custom Select Dropdown Logic ---
+
+// Closes all custom select dropdowns except the one passed as elmnt
+function closeAllSelect(elmnt) {
+  const selectItems = document.getElementsByClassName("select-items");
+  const selectedBoxes = document.getElementsByClassName("select-selected");
+  const activeIndices = [];
+
+  // Find the index of the element being interacted with
+  for (let i = 0; i < selectedBoxes.length; i++) {
+    if (elmnt === selectedBoxes[i]) {
+      activeIndices.push(i);
+    } else {
+      selectedBoxes[i].classList.remove("select-arrow-active");
+    }
+  }
+  // Hide all dropdowns that are not the active one
+  for (let i = 0; i < selectItems.length; i++) {
+    // Check if the parent wrapper does NOT have the 'join-options-visible' class
+    const wrapper = selectItems[i].closest('.custom-select-wrapper');
+    if (!wrapper || !wrapper.classList.contains('join-options-visible')) {
+      if (activeIndices.indexOf(i) === -1) { // If index is not in active list
+        selectItems[i].classList.add("select-hide");
+      }
+    }
+  }
+}
+
+// Initializes all elements with the class "custom-select"
+function initializeCustomSelects() {
+    const customSelects = document.getElementsByClassName("custom-select");
+    for (let i = 0; i < customSelects.length; i++) {
+        const customSelectDiv = customSelects[i];
+        const wrapper = customSelectDiv.closest('.custom-select-wrapper');
+        const hiddenInput = wrapper?.querySelector('input[type="hidden"]');
+        const selectedDisplay = customSelectDiv.querySelector(".select-selected");
+        const itemsContainer = customSelectDiv.querySelector(".select-items");
+
+        if (!hiddenInput || !selectedDisplay || !itemsContainer) {
+            console.warn("Skipping malformed custom select:", customSelectDiv);
+            continue;
+        }
+
+        const isJoinSelector = wrapper.classList.contains('join-options-visible'); // Check for the class
+
+        const options = itemsContainer.getElementsByClassName("select-option");
+
+        // Set initial display / selected state
+        const initialValue = hiddenInput.value;
+        let initialHTML = 'Select...'; // Fallback for dropdowns
+        for (let k = 0; k < options.length; k++) {
+            if (options[k].getAttribute('data-value') === initialValue) {
+                initialHTML = options[k].innerHTML; // Get HTML for dropdowns
+                options[k].classList.add("same-as-selected");
+                if (!isJoinSelector) { // Only move to top for dropdowns
+                   itemsContainer.prepend(options[k]);
+                }
+                break;
+            }
+        }
+        if (!isJoinSelector) { // Only set display HTML for dropdowns
+            selectedDisplay.innerHTML = initialHTML;
+        }
+
+
+        // --- Conditional Listeners ---
+
+        if (!isJoinSelector) {
+            // == STANDARD DROPDOWN LOGIC (for Start/End caps) ==
+            selectedDisplay.addEventListener("click", function(e) {
+                e.stopPropagation();
+                closeAllSelect(this); // Close others
+                itemsContainer.classList.toggle("select-hide");
+                this.classList.toggle("select-arrow-active");
+            });
+
+            // Basic keyboard nav for dropdowns (optional)
+            selectedDisplay.addEventListener("keydown", function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click(); // Open/close dropdown
+                }
+            });
+
+            for (let j = 0; j < options.length; j++) {
+                options[j].addEventListener("click", function() {
+                    const newValue = this.getAttribute("data-value");
+                    selectedDisplay.innerHTML = this.innerHTML;
+                    hiddenInput.value = newValue;
+
+                    const siblings = this.parentNode.children;
+                    for (let k = 0; k < siblings.length; k++) {
+                        siblings[k].classList.remove("same-as-selected");
+                    }
+                    this.classList.add("same-as-selected");
+                    this.parentNode.prepend(this); // Move selected option to the top
+                    selectedDisplay.click(); // Close dropdown
+                });
+            }
+        } else {
+            // == ALWAYS VISIBLE LOGIC (for Join) ==
+            // No click listener needed for selectedDisplay (it's hidden)
+            // No keydown listener needed for selectedDisplay
+
+            for (let j = 0; j < options.length; j++) {
+                options[j].addEventListener("click", function() {
+                    const newValue = this.getAttribute("data-value");
+                    hiddenInput.value = newValue; // Update hidden input
+
+                    // Update styling for selected option
+                    const siblings = this.parentNode.children;
+                    for (let k = 0; k < siblings.length; k++) {
+                        siblings[k].classList.remove("same-as-selected");
+                    }
+                    this.classList.add("same-as-selected");
+                    // No need to close anything
+                });
+            }
+        }
+    }
+}
+
+
+// --- Gradient Stop Management ---
+
+// Create editor panels for all stops
+function createAllStopEditors() {
+
+    // Create an editor for each stop
+    stops.forEach(stop => {
+        const stopEditor = createStopEditorElement(stop);
+        allStopsContainer.appendChild(stopEditor);
+    });
+    updateRemoveButtonStates(); // Update button states after creating editors
+  }
+
+// Create a single stop editor element
+function createStopEditorElement(stop) {
+    const stopEditor = document.createElement('div');
+    stopEditor.className = 'stop-editor';
+    stopEditor.dataset.stopId = stop.id; // Link editor to stop data
+
+    // Add position input row
+    const positionRow = document.createElement('div');
+    positionRow.className = 'input-row';
+    const positionInput = document.createElement('input');
+    positionInput.type = 'text';
+    positionInput.className = 'stop-position';
+    positionInput.value = `${stop.position}%`;
+    positionInput.min = '0';
+    positionInput.max = '100';
+    positionInput.step = '1';
+    positionRow.appendChild(positionInput);
+    stopEditor.appendChild(positionRow);
+
+    // Add color selection row
+    const colorRow = document.createElement('div');
+    colorRow.className = 'input-row color-selection';
+
+    // Color preview element
+    const stopEditorColorPreview = document.createElement('div');
+    stopEditorColorPreview.className = 'current-stop-preview';
+    colorRow.appendChild(stopEditorColorPreview);
+
+    // Color input
+    const colorInput = document.createElement('input');
+    colorInput.type = 'text';
+    colorInput.className = 'stop-color';
+    colorInput.value = stop.color;
+    colorRow.appendChild(colorInput);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'line-break-vertical';
+    colorRow.appendChild(divider);
+
+    // Alpha input
+    const alphaInput = document.createElement('input');
+    alphaInput.type = 'number';
+    alphaInput.className = 'stop-alpha';
+    alphaInput.value = stop.alpha * 100;
+    alphaInput.min = '0';
+    alphaInput.max = '100';
+    alphaInput.step = '1';
+    alphaInput.addEventListener('keydown', (e) => {
+            alphaInput.step = e.shiftKey ? 10 : 1; // Use 10 for Shift+Arrow, 1 otherwise
+    });
+    colorRow.appendChild(alphaInput);
+
+    // Alpha label
+    const alphaLabel = document.createElement('label');
+    alphaLabel.setAttribute('for', 'stop-alpha');
+    alphaLabel.textContent = '%';
+    colorRow.appendChild(alphaLabel);
+
+    stopEditor.appendChild(colorRow);
+
+    // Add remove button (state will be set by updateRemoveButtonStates)
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-stop-btn';
+    removeBtn.textContent = '—';
+    stopEditor.appendChild(removeBtn);
+
+    // Add event listeners to inputs
+    setupStopEditorListeners(stopEditor, stop.id);
+
+    return stopEditor;
+}
+
+// --- Reorder Stop Editors ---
+function reorderStopEditors() {
+    // Save the currently focused element
+    const focusedElement = document.activeElement;
+    if (!allStopsContainer) return; // Ensure the container exists
+
+    // Get all stop editor elements
+    const stopEditors = Array.from(allStopsContainer.querySelectorAll('.stop-editor'));
+
+    // Compute the sorted version
+    const sortedEditors = stopEditors.slice().sort((a, b) => {
+        const stopA = stops.find(s => s.id === a.dataset.stopId);
+        const stopB = stops.find(s => s.id === b.dataset.stopId);
+        // Sort primarily by position, then by ID as a tie-breaker (for stability)
+        const posDiff = (stopA?.position ?? 0) - (stopB?.position ?? 0);
+        if (posDiff !== 0) return posDiff;
+        return (stopA?.id ?? '').localeCompare(stopB?.id ?? '');
+    });
+
+    // For each sorted editor, if it’s not in the correct position, move it.
+    sortedEditors.forEach((editor, index) => {
+        // If the current editor is not at the correct position, reposition it.
+        if (allStopsContainer.children[index] !== editor) {
+            // insertBefore will automatically remove the editor from its current position.
+            allStopsContainer.insertBefore(editor, allStopsContainer.children[index]);
+        }
+    });
+
+    // Restore focus if it was on an input element
+    if (focusedElement && focusedElement.tagName === 'INPUT') {
+        focusedElement.focus();
+    }
+}
+
+
+// Set up event listeners for a stop editor
+function setupStopEditorListeners(editorElement, stopId) {
+    const positionInput = editorElement.querySelector('.stop-position');
+    const colorInput = editorElement.querySelector('.stop-color');
+    const stopEditorColorPreview = editorElement.querySelector('.current-stop-preview');
+    const alphaInput = editorElement.querySelector('.stop-alpha');
+    const removeBtn = editorElement.querySelector('.remove-stop-btn');
+
+    // Position input events
+    if (positionInput) {
+        positionInput.addEventListener('keydown', handlePositionKeydown);
+        positionInput.addEventListener('mousedown', () => selectStop(stopId));
+        positionInput.addEventListener('input', (e) => {
+            const stop = stops.find(s => s.id === stopId);
+            if (!stop) return;
+            let value = e.target.value.replace('%', '');
+            let newPosition = parseInt(value);
+            if (!isNaN(newPosition)) {
+                newPosition = Math.max(0, Math.min(100, newPosition));
+                if (stop.position !== newPosition) {
+                    stop.position = newPosition;
+                    updateGradient(); // This will call reorderStopEditors
+                    positionStops();
+                }
+            }
+        });
+        positionInput.addEventListener('blur', (e) => { // Ensure formatting on blur
+             const stop = stops.find(s => s.id === stopId);
+             if (stop) e.target.value = `${stop.position}%`;
+        });
+    }
+
+    // Color input events
+    colorInput.addEventListener('mousedown', () => selectStop(stopId));
+    colorInput.addEventListener('input', (e) => {
+        const stop = stops.find(s => s.id === stopId);
+        if (!stop) return;
+
+        const parsed = parseHexWithOptionalAlpha(e.target.value);
+        if (parsed) {
+            const newAlpha = parsed.alphaPercent / 100;
+            if (stop.color !== parsed.color || stop.alpha !== newAlpha) {
+                stop.color = parsed.color;
+                stop.alpha = newAlpha;
+                stopEditorColorPreview.style.setProperty('--background', stop.color);
+                alphaInput.value = parsed.alphaPercent;
+
+                // Update hidden input in the actual stop element
+                const stopElement = document.getElementById(stopId);
+                const hiddenInput = stopElement?.querySelector('input[type="color"]');
+                if (hiddenInput) hiddenInput.value = stop.color;
+
+                updateGradient();
+            }
+        }
+    });
+     colorInput.addEventListener('blur', (e) => { // Ensure formatting on blur
+         const stop = stops.find(s => s.id === stopId);
+         if (stop) e.target.value = stop.color; // Revert to #rrggbb format
+     });
+
+
+    // Alpha input events
+    alphaInput.addEventListener('mousedown', () => selectStop(stopId));
+    alphaInput.addEventListener('input', (e) => {
+        const stop = stops.find(s => s.id === stopId);
+        if (!stop) return;
+
+        let alphaPercent = parseInt(e.target.value);
+        if (!isNaN(alphaPercent)) {
+            alphaPercent = Math.max(0, Math.min(100, alphaPercent));
+            const newAlpha = alphaPercent / 100;
+            if (stop.alpha !== newAlpha) {
+                stop.alpha = newAlpha;
+                updateGradient();
+            }
+        }
+    });
+     alphaInput.addEventListener('blur', (e) => { // Ensure formatting on blur
+         const stop = stops.find(s => s.id === stopId);
+         if (stop) e.target.value = Math.round(stop.alpha * 100);
+     });
+
+    // Color preview click (open color picker)
+    stopEditorColorPreview.addEventListener('click', () => {
+        selectStop(stopId);
+        const stopElement = document.getElementById(stopId);
+        const colorInput = stopElement?.querySelector('input[type="color"]');
+        colorInput?.click();
+    });
+
+    // Add mousedown listener to select the stop editor
+    removeBtn.addEventListener('mousedown', (e) => {
+        // Call selectStop with the stopId associated with this editor
+        selectStop(stopId);
+        // Allow the default mousedown event to continue to potentially trigger the click
+    });
+
+    // Remove button
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent the editor click listener from firing immediately after
+        deleteStop(stopId); // Deletion logic now checks stops.length
+    });
+
+    // Make entire editor select the stop when clicked
+    editorElement.addEventListener('click', () => selectStop(stopId));
+}
+
+
+// New function to ensure all stops are visible
+function showAllStops() {
+    stops.forEach(stop => {
+        const stopElement = document.getElementById(stop.id);
+        if (stopElement) {
+            // Make sure the color preview is visible
+            const preview = stopElement.querySelector('.color-preview');
+            if (preview) {
+                preview.style.display = 'block';
+                preview.style.setProperty('--background', stop.color);
+            }
+            const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
+            const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
+            if (stopEditorColorPreview) {
+                stopEditorColorPreview.style.setProperty('--background', stop.color);
+            }
+            // Make sure the stop element itself is visible
+            stopElement.style.display = 'block';
+        }
+    });
+}
+
+// Selects a color stop visually and highlights its editor
+function selectStop(stopId) {
+    // If already selected, ensure class is present
+    if (selectedStopId === stopId) {
+        const currentEl = document.getElementById(stopId);
+        if (currentEl && !currentEl.classList.contains('selected')) {
+            currentEl.classList.add('selected');
+        }
+
+        // Ensure editor is highlighted
+        highlightStopEditor(stopId);
+        return;
+    }
+
+    // Deselect previous stop
+    if (selectedStopId) {
+        const previousEl = document.getElementById(selectedStopId);
+        if (previousEl) {
+            previousEl.classList.remove('selected');
+        }
+
+        // Unhighlight previous editor
+        const previousEditor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${selectedStopId}"]`);
+        if (previousEditor) {
+            previousEditor.classList.remove('selected');
+        }
+    }
+
+    // Select the new stop
+    const stopElement = document.getElementById(stopId);
+    if (stopElement) {
+        stopElement.classList.add('selected');
+        selectedStopId = stopId;
+
+        // Highlight the corresponding editor
+        highlightStopEditor(stopId);
+    } else {
+        console.warn(`selectStop called for non-existent ID: ${stopId}`);
+        selectedStopId = null; // Reset if ID is invalid
+        highlightStopEditor(null); // Unhighlight all editors
+    }
+}
+
+// Highlight the editor for a selected stop
+function highlightStopEditor(stopId) {
+    // Remove selected class and reset border from all editors
+    const allEditors = allStopsContainer.querySelectorAll('.stop-editor');
+    allEditors.forEach(editor => {
+        editor.classList.remove('selected')
+    });
+
+    if (stopId) {
+        // Add selected class and border to the editor for this stop
+        const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stopId}"]`);
+        if (editor) {
+            editor.classList.add('selected');
+        }
+    }
+}
+
+// Positions all stop elements visually based on their data
+function positionStops() {
+    const gradientWidth = gradientBar.offsetWidth;
+    stops.forEach(stop => {
+        const stopElement = document.getElementById(stop.id);
+        if (stopElement) {
+            stopElement.style.left = `${(stop.position / 100) * gradientWidth}px`;
+        }
+    });
+}
+
+// Updates the gradient bar background based on current stops
+function updateGradient() {
+    const focusedElement = document.activeElement; // Store focused element before updates
+    const focusedElementId = focusedElement?.id; // Store its ID if it has one
+    const focusedInputClass = focusedElement?.classList.contains('stop-position') ||
+                              focusedElement?.classList.contains('stop-color') ||
+                              focusedElement?.classList.contains('stop-alpha')
+                              ? focusedElement.className.split(' ')[0] // Get primary class if it's a stop input
+                              : null;
+    const focusedStopEditor = focusedElement?.closest('.stop-editor'); // Check if focus is within a stop editor
+    const focusedStopId = focusedStopEditor?.dataset.stopId; // Get the stop ID if focus is in an editor input
+
+          if (!Array.isArray(stops) || stops.length === 0) {
+              console.error("Invalid 'stops' array for gradient update:", stops);
+              gradientBar.style.background = 'grey'; // Fallback
+              return;
+          }
+
+    // Sort stops by position for correct gradient generation
+    let sortedStops = [...stops].sort((a, b) => a.position - b.position);
+
+    // Create the CSS linear-gradient string including alpha
+    let gradientString = sortedStops
+        .map(stop => {
+            const alpha = stop.alpha !== undefined ? stop.alpha : 1;
+            const rgba = hexToRgba(stop.color, alpha); // Convert hex + alpha to rgba()
+            return `${rgba} ${stop.position}%`;
+        })
+        .join(', ');
+
+    gradientBar.style.background = `linear-gradient(to right, ${gradientString}), url(data:image/svg+xml;utf8,%3Csvg%20width%3D%226%22%20height%3D%226%22%20viewBox%3D%220%200%206%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%200H3V3H0V0Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M3%200H6V3H3V0Z%22%20fill%3D%22white%22/%3E%3Cpath%20d%3D%22M3%203H6V6H3V3Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M0%203H3V6H0V3Z%22%20fill%3D%22white%22/%3E%3C/svg%3E%0A)`;
+
+    // Update visual representation of stops (position and preview color)
+    stops.forEach(stop => {
+        const stopElement = document.getElementById(stop.id);
+        if (stopElement) {
+            // Update position (redundant if called after positionStops, but safe)
+            const gradientWidth = gradientBar.offsetWidth; // Get current width
+            stopElement.style.left = `${(stop.position / 100) * gradientWidth}px`;
+            // Update preview color (uses hex color without alpha)
+            const preview = stopElement.querySelector('.color-preview');
+            const alpha = stop.alpha !== undefined ? stop.alpha : 1;
+            if (preview) {
+                preview.style.setProperty('--before-background', 'url(data:image/svg+xml;utf8,%3Csvg%20width%3D%226%22%20height%3D%226%22%20viewBox%3D%220%200%206%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%200H3V3H0V0Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M3%200H6V3H3V0Z%22%20fill%3D%22white%22/%3E%3Cpath%20d%3D%22M3%203H6V6H3V3Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M0%203H3V6H0V3Z%22%20fill%3D%22white%22/%3E%3C/svg%3E%0A)');
+                preview.style.setProperty('--after-background', hexToRgba(stop.color, alpha));
+                preview.style.setProperty('--background', stop.color);
+                preview.style.display = 'block'; // Ensure visibility
+            }
+            // Update hidden color input value (uses hex color without alpha)
+            const input = stopElement.querySelector('input[type="color"]');
+            if (input) input.value = stop.color;
+        }
+
+        // Update stop editor values
+        updateStopEditorValues(stop);
+    });
+    reorderStopEditors(); // Ensure the editor panels are in the correct order
+    updateRemoveButtonStates(); // Update button states after gradient update
+   // --- Attempt to Restore Focus ---
+          // Check if focus was lost from the element that was previously focused
+          if (focusedElement && document.activeElement !== focusedElement) {
+              // Prioritize restoring focus if the element had an ID and still exists
+              if (focusedElementId && document.getElementById(focusedElementId)) {
+                  const elementToRestore = document.getElementById(focusedElementId);
+                   // Check if it's an input before focusing
+                   if (elementToRestore && typeof elementToRestore.focus === 'function') {
+                        elementToRestore.focus();
+                        // If it's a text input, try to restore cursor position (basic end placement)
+                        if (elementToRestore.type === 'text' && typeof elementToRestore.setSelectionRange === 'function') {
+                            const len = elementToRestore.value.length;
+                            elementToRestore.setSelectionRange(len, len);
+                        }
+                    }
+              }
+              // If no ID or element with ID not found, try restoring based on class within the original stop editor
+              else if (focusedStopId && focusedInputClass) {
+                  const editorToRestore = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${focusedStopId}"]`);
+                  if (editorToRestore) {
+                      const inputToRestore = editorToRestore.querySelector(`.${focusedInputClass}`);
+                      if (inputToRestore && typeof inputToRestore.focus === 'function') {
+                           inputToRestore.focus();
+                           // If it's a text input, try to restore cursor position (basic end placement)
+                            if (inputToRestore.type === 'text' && typeof inputToRestore.setSelectionRange === 'function') {
+                                const len = inputToRestore.value.length;
+                                inputToRestore.setSelectionRange(len, len);
+                            }
+                      }
+                  }
+              }
+          }
+      }
+
+// Update an individual stop editor with current values
+function updateStopEditorValues(stop) {
+    console.log(`updateStopEditorValues called for stop ID: ${stop.id}`); // <-- Add this
+    const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
+    console.log('Found editor element:', editor); // <-- here we get an error returning null
+    if (!editor) return;
+    const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
+    const positionInput = editor.querySelector('.stop-position');
+    const colorInput = editor.querySelector('.stop-color');
+    const alphaInput = editor.querySelector('.stop-alpha');
+    if (stopEditorColorPreview) {
+        const alpha = stop.alpha !== undefined ? stop.alpha : 1; // Get current alpha
+        stopEditorColorPreview.style.setProperty('--background', stop.color); // Set the background (non-alpha) color
+        stopEditorColorPreview.style.setProperty('--before-background', 'url(data:image/svg+xml;utf8,%3Csvg%20width%3D%226%22%20height%3D%226%22%20viewBox%3D%220%200%206%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%200H3V3H0V0Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M3%200H6V3H3V0Z%22%20fill%3D%22white%22/%3E%3Cpath%20d%3D%22M3%203H6V6H3V3Z%22%20fill%3D%22%23E1E1E1%22/%3E%3Cpath%20d%3D%22M0%203H3V6H0V3Z%22%20fill%3D%22white%22/%3E%3C/svg%3E%0A)'); // Set the checkerboard background
+        stopEditorColorPreview.style.setProperty('--after-background', hexToRgba(stop.color, alpha)); // Set the actual background color (RGBA) with transparency
+    }
+    // Only update inputs if currently unfocused to avoid disrupting typing
+    if (positionInput && document.activeElement !== positionInput) positionInput.value = `${stop.position}%`; // Set the position value
+    if (colorInput && document.activeElement !== colorInput) colorInput.value = stop.color; // Update the preview square in the editor panel
+    if (alphaInput && document.activeElement !== alphaInput) alphaInput.value = Math.round(stop.alpha * 100); // Set the alpha value
+}
+
+// Adds a new color stop to the data model and the DOM
+function addNewStop(position, colorData) {
+
+    parent.postMessage({ // Send the resize message to the Figma plugin environment
+        pluginMessage: {
+            type: 'resize',
+            height: (baseHeight + ((stops.length + 1) * heightPerStop)) // Calculate the required height based on the number of stops
+        }
+    }, '*'); // Use a specific origin in production if possible
+
+    // Validate colorData
+    if (typeof position !== 'number' || position < 0 || position > 100) {
+        console.error("Invalid stop position:", position);
+        return;
+    }
+
+    const stopId = `stop-${Date.now()}`; // Generate unique ID
+    const newStop = {
+        id: stopId,
+        position: Math.round(position), // Ensure integer position
+        color: colorData.color,
+        alpha: colorData.alpha !== undefined ? colorData.alpha : 1,
+        isEndpoint: false // New stops are never endpoints (this property is now less relevant)
+    };
+    stops.push(newStop);
+
+    // Create DOM element for the new stop
+    const stopElement = document.createElement('div');
+    stopElement.classList.add('color-stop');
+    stopElement.id = stopId;
+    stopElement.innerHTML = `
+        <div class="color-preview-container"><div class="color-preview" style="background:var(--after-background)"></div></div>
+        <input type="color" value="${newStop.color}">`;
+    colorStops.appendChild(stopElement); // Add to container
+
+    // Create editor for the new stop
+    const stopEditor = createStopEditorElement(newStop);
+    allStopsContainer.appendChild(stopEditor);
+
+    // Setup handlers for the new stop
+    setupColorInputHandler(stopId); // Color input/preview click
+    const colorPreview = stopElement.querySelector('.color-preview');
+    if (colorPreview) {
+        colorPreview.addEventListener('mousedown', (e) => handleStopDragStart(e, stopElement)); // Dragging
+    }
+
+    positionStops();    // Position uses the (now stable) offsetWidth
+    updateGradient();   // Update gradient display, etc. (this now updates button states)
+    selectStop(stopId); // Select the newly added stop
+        // Send the resize message to the Figma plugin environment
+        parent.postMessage({
+            pluginMessage: {
+                type: 'resize',
+                width: (baseWidth + (((document.body.scrollHeight - 26) > document.body.clientHeight) ? getScrollbarWidth() : 0)),
+            }
+        }, '*'); // Use a specific origin in production if possible;
+
+// Calculate the final width
+console.log('body scroll height:', (document.body.scrollHeight - 26), 'client height:', document.body.clientHeight);
+
+}
+
+/**
+ * Calculates the width of the browser's vertical scrollbar.
+ *
+ * This function creates a temporary, hidden div element,
+ * forces a scrollbar to appear on it, measures the difference
+ * between its outer width (including scrollbar) and inner width
+ * (excluding scrollbar), and then removes the temporary element.
+ *
+ * @returns {number} The width of the scrollbar in pixels.
+ */
+ function getScrollbarWidth() {
+  // Create a temporary outer div
+  const outer = document.createElement('div');
+  outer.style.visibility = 'hidden'; // Keep it hidden
+  outer.style.overflow = 'scroll'; // Force a scrollbar
+  // The following line is needed for MS Edge browser
+  outer.style.msOverflowStyle = 'scrollbar';
+  document.body.appendChild(outer); // Add it to the DOM to measure
+
+  // Create a temporary inner div
+  const inner = document.createElement('div');
+  outer.appendChild(inner);
+
+  // Calculate the difference between the outer width and inner width
+  // offsetWidth includes border, padding, and scrollbar
+  // clientWidth includes padding but not border, margin, or scrollbar
+  const scrollbarWidth = outer.offsetWidth - outer.clientWidth;
+
+  // Remove the temporary element from the DOM
+  outer.parentNode.removeChild(outer);
+  document.body.style.overflowY = 'scroll'; // Force a scrollbar
+  return scrollbarWidth;
+}
+
+      // --- Send dynamic resize message ---
+      function sendResizeMessage() {
+          // Calculate the required height based on the number of stops
+          const calculatedHeight = baseHeight + (stops.length * heightPerStop);
+
+          // Check if the body's content height is greater than its visible height
+          // This indicates a vertical scrollbar is likely present
+          const hasScrollbar = document.body.scrollHeight > document.body.clientHeight;
+
+          // Calculate the final width
+          const finalWidth = baseWidth + (hasScrollbar ? getScrollbarWidth() : 0);
+
+          // Send the resize message to the Figma plugin environment
+          parent.postMessage({
+              pluginMessage: {
+                  type: 'resize',
+                  width: finalWidth,
+                  height: calculatedHeight
+              }
+          }, '*'); // Use a specific origin in production if possible
+      }
+
+// Deletes a color stop from the data model and the DOM
+function deleteStop(stopId) {
+    // MODIFIED: Check if there are enough stops to allow deletion
+    if (stops.length <= 2) {
+        console.log("Cannot delete stop: Minimum of 2 stops required.");
+        return; // Prevent deletion if 2 or fewer stops exist
+    }
+
+    const stopIndex = stops.findIndex(s => s.id === stopId);
+    if (stopIndex === -1) return; // Stop not found
+
+    // const stop = stops[stopIndex]; // No longer needed for isEndpoint check
+    // if (stop.isEndpoint) return; // MODIFIED: Remove this check
+
+    // Remove DOM element (the stop on the gradient bar)
+    const stopElement = document.getElementById(stopId);
+    stopElement?.remove();
+
+    // Remove editor element from the panel
+    const editorElement = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stopId}"]`);
+    editorElement?.remove();
+
+    // Remove from data array
+    stops.splice(stopIndex, 1);
+
+    // Send the resize message to the Figma plugin environment
+    sendResizeMessage();
+    document.body.style.overflowY = ''; // Reset overflow after resize
+
+    // If the deleted stop was selected, select another stop
+    if (selectedStopId === stopId) {
+        // Select the next available stop based on position, or the first one
+        const remainingStops = [...stops].sort((a, b) => a.position - b.position);
+        let nextStopToSelect = null;
+        if (remainingStops.length > 0) {
+            // Try to find the stop that was originally after the deleted one
+            const nextIndex = remainingStops.findIndex(s => s.position >= (stopElement?.dataset?.position || 0)); // Use original position if available
+            nextStopToSelect = remainingStops[nextIndex !== -1 ? nextIndex : 0].id; // Select next or first
+        }
+         selectStop(nextStopToSelect);
+    }
+
+    updateGradient(); // Update UI (this will also update button states)
+}
+
+// --- Stop Dragging Logic ---
+
+// Sets up event listeners for a specific stop's color input and preview click
+function setupColorInputHandler(stopId) {
+    const stopElement = document.getElementById(stopId);
+    if (!stopElement) return;
+    const colorInput = stopElement.querySelector('input[type="color"]'); // Hidden color picker
+    const colorPreview = stopElement.querySelector('.color-preview'); // Visible preview circle
+
+    // Handle changes from the hidden color picker
+    if (colorInput) {
+        colorInput.addEventListener('input', (e) => {
+            const stopObj = stops.find(s => s.id === stopId);
+            if (stopObj) {
+                stopObj.color = e.target.value; // Update color in data model
+                if (colorPreview) colorPreview.style.setProperty('--background',  e.target.value); // Update preview visually
+                const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
+                const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
+                if (stopEditorColorPreview) stopEditorColorPreview.style.setProperty('--background', e.target.value); // Update editor preview
+                updateGradient(); // Redraw gradient and update editor
+            }
+        });
+    }
+
+    // Handle clicks on the visible preview circle
+    if (colorPreview) {
+        colorPreview.addEventListener('click', () => {
+            if (!isDragging) { // Only trigger if not currently dragging this stop
+                selectStop(stopId); // Select the stop
+                colorInput?.click(); // Open the hidden color picker
+            }
+        });
+    }
+}
+
+// Initializes drag handlers for the initial start and end stops
+function setupInitialStopHandlers() {
+    setupColorInputHandler('start-stop');
+    setupColorInputHandler('end-stop');
+    startPreview.addEventListener('mousedown', (e) => handleStopDragStart(e, startStop));
+    endPreview.addEventListener('mousedown', (e) => handleStopDragStart(e, endStop));
+}
+
+// Handles the start of dragging a color stop
+function handleStopDragStart(e, element) {
+    if (e.button !== 0) return; // Only respond to left-click
+    e.preventDefault(); // Prevent default text selection/drag behaviors
+    isDragging = true;
+    activeDragElement = element;
+    selectStop(element.id); // Select the stop being dragged
+    dragStartX = e.clientX; // Record starting mouse position
+    dragStartLeft = parseInt(window.getComputedStyle(element).left || '0'); // Record starting element position
+
+    // Add temporary listeners to the document for move and mouseup
+    document.addEventListener('mousemove', handleStopDragMove);
+    document.addEventListener('mouseup', handleStopDragEnd, { once: true }); // Remove after first trigger
+}
+
+// Handles mouse movement while dragging a color stop
+function handleStopDragMove(e) {
+    if (!isDragging || !activeDragElement) return;
+    e.preventDefault(); // Prevent selection during drag
+
+    const gradientRect = gradientBar.getBoundingClientRect();
+    const minX = 0; // Minimum pixel position (left edge of bar)
+    const maxX = gradientRect.width; // Maximum pixel position (right edge of bar)
+
+    // Calculate new horizontal position based on mouse movement
+    let newLeft = dragStartLeft + (e.clientX - dragStartX);
+    newLeft = Math.max(minX, Math.min(newLeft, maxX)); // Clamp position within bar bounds
+
+    // Calculate percentage position
+    const position = Math.round((newLeft / maxX) * 100);
+
+    // Update the stop's data model
+    const stopId = activeDragElement.id;
+    const stop = stops.find(s => s.id === stopId);
+    if (stop) {
+        stop.position = position; // Update position in the data array
+        activeDragElement.style.left = `${newLeft}px`; // Update visual position immediately
+        updateGradient(); // Redraw gradient bar and update editor (calls reorder)
+    }
+}
+
+// Handles the end of dragging a color stop
+function handleStopDragEnd() {
+    if (isDragging) {
+        isDragging = false;
+        activeDragElement = null;
+        document.removeEventListener('mousemove', handleStopDragMove);
+        // mouseup listener is removed automatically due to { once: true }
+        // Final update to ensure consistency (might be redundant but safe)
+        updateGradient();
+    }
+}
+
+// --- Gradient Bar Click Listener ---
+
+// Sets up the click listener for the gradient bar
+function setupGradientBarClickListener() {
+    gradientBar.addEventListener('click', (e) => {
+        // Ignore clicks if not directly on the bar itself, or if a stop is being dragged
+        if (e.target !== gradientBar || isDragging) return;
+
+        const gradientRect = gradientBar.getBoundingClientRect();
+        const clickX = e.clientX - gradientRect.left; // Click position relative to the bar
+        const positionPercent = Math.round((clickX / gradientRect.width) * 100); // Position as percentage
+
+        // Get the interpolated color and alpha at the click position
+        const colorData = getColorAtPosition(positionPercent);
+
+        // Add the new stop using the calculated position and color data
+        addNewStop(positionPercent, colorData);
+    });
+}
+
+// --- Stop Editor Panel Logic ---
+// NOTE: The individual panel was removed in favor of per-stop editors.
+// The functions below related to a single panel (updateStopPanel, setupPanelInputListeners, etc.)
+// are no longer used and could be removed for cleanup, but are left for reference
+// if that structure were to be reintroduced. Event handling is now done in
+// createStopEditorElement and setupStopEditorListeners.
+
+// --- Utility Functions ---
+
+// MODIFIED: Add function to update remove button states
+function updateRemoveButtonStates() {
+    const canDelete = stops.length > 2; // Determine if deletion is allowed
+    const allRemoveButtons = allStopsContainer.querySelectorAll('.remove-stop-btn');
+    allRemoveButtons.forEach(button => {
+        button.disabled = !canDelete; // Disable if less than 3 stops, enable otherwise
+    });
+}
+
+// Handlers for Panel Inputs (These are now handled per-editor, see setupStopEditorListeners)
+function handlePositionInput(e) { /* ... */ }
+function handlePositionBlur(e) { /* ... */ }
+function handlePositionKeydown(e) { // Arrow key handling for POSITION input
+     // Check if a stop is selected and if ArrowUp/Down was pressed
+     if (!selectedStopId || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+
+     // Find the editor element for the currently selected stop
+     const selectedEditor = allStopsContainer.querySelector(`.stop-editor.selected[data-stop-id="${selectedStopId}"]`);
+     if (!selectedEditor) return; // Exit if editor not found or not selected
+
+     // Find the position input WITHIN that specific editor
+     const positionInput = selectedEditor.querySelector('.stop-position');
+     if (!positionInput || document.activeElement !== positionInput) return; // Exit if input not found or not focused
+
+     e.preventDefault(); // Prevent default page scroll or input behavior
+
+     const stop = stops.find(s => s.id === selectedStopId);
+     if (!stop) return; // Exit if stop data not found
+
+     // Parse the current value from the correct input field
+     let currentVal = parseInt(positionInput.value.replace('%', ''));
+     // Fallback to stop data if parsing fails (e.g., input is empty)
+     if (isNaN(currentVal)) currentVal = stop.position;
+
+     const step = e.shiftKey ? 10 : 1; // Use 10 for Shift+Arrow, 1 otherwise
+     currentVal += (e.key === 'ArrowUp' ? step : -step); // Increment or decrement
+
+     currentVal = Math.max(0, Math.min(100, currentVal)); // Clamp value between 0 and 100
+
+     // Update the input field's value directly
+     positionInput.value = currentVal + '%';
+
+     // Update the stop data and the gradient if the value actually changed
+     if (stop.position !== currentVal) {
+         stop.position = currentVal;
+         updateGradient(); // This will also update the stop's visual position and reorder editors
+     }
+ }
+function handleColorInput(e) { /* ... */ }
+function handleColorBlur(e) { /* ... */ }
+function handleAlphaInput(e) { /* ... */ }
+function handleAlphaBlur(e) { /* ... */ }
+
+      // Interpolates color and alpha between two stops at a given ratio (0-1)
+      function getColorAtPosition(positionPercent) {
+          const sortedStops = [...stops].sort((a, b) => a.position - b.position);
+          if (sortedStops.length === 0) return { color: '#808080', alpha: 1 }; // Default if no stops
+          if (sortedStops.length === 1) return { color: sortedStops[0].color, alpha: sortedStops[0].alpha ?? 1 };
+
+          // Find the two stops the position falls between
+          let prevStop = sortedStops[0];
+          let nextStop = sortedStops[sortedStops.length - 1];
+          if (positionPercent <= prevStop.position) return { color: prevStop.color, alpha: prevStop.alpha ?? 1 };
+          if (positionPercent >= nextStop.position) return { color: nextStop.color, alpha: nextStop.alpha ?? 1 };
+
+          for (let i = 0; i < sortedStops.length - 1; i++) {
+              if (sortedStops[i].position <= positionPercent && sortedStops[i + 1].position >= positionPercent) {
+                  prevStop = sortedStops[i];
+                  nextStop = sortedStops[i + 1];
+                  break;
+              }
+          }
+
+          // Calculate interpolation ratio
+          const range = nextStop.position - prevStop.position;
+          const ratio = (range === 0) ? 1 : (positionPercent - prevStop.position) / range; // Avoid division by zero
+
+          // Interpolate color and alpha
+          const interpolatedColor = interpolateColor(prevStop.color, nextStop.color, ratio);
+          const prevAlpha = prevStop.alpha ?? 1;
+          const nextAlpha = nextStop.alpha ?? 1;
+          const interpolatedAlpha = prevAlpha + (nextAlpha - prevAlpha) * ratio;
+
+          return { color: interpolatedColor, alpha: interpolatedAlpha };
+      }
+
+// Setup event listener for add button if present
+if (addStopBtn) {
+    addStopBtn.addEventListener('click', handleAddStopClick);
+}
+
+// This function is now handled by the listener in setupStopEditorListeners
+// function handleRemoveStopClick() { /* ... */ }
+
+      // --- Stroke Weight Input Logic ---
+
+      // Sets up listeners for the stroke weight input (drag and keyboard)
+function setupWeightDragListeners() {
+    strokeWeightInput.addEventListener('keydown', handleWeightKeydown);
+    strokeWeightInput.addEventListener('mousedown', handleWeightMouseDown);
+    strokeWeightInput.addEventListener('focus', (e) => e.target.select()); // Select text on focus
+}
+
+      // Handles Shift + Arrow Up/Down for stroke weight input
+      function handleWeightKeydown(e) {
+          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+          e.preventDefault(); // Prevent default input stepping
+
+          const step = e.shiftKey ? 10 : 1; // Larger step with Shift
+          const minVal = parseFloat(strokeWeightInput.min) || 0;
+          const maxVal = parseFloat(strokeWeightInput.max); // Check if max is defined
+          let currentValue = parseFloat(strokeWeightInput.value) || 0;
+
+          currentValue += (e.key === 'ArrowUp' ? step : -step);
+
+          // Clamp value within min/max bounds
+          currentValue = Math.max(minVal, currentValue);
+          if (!isNaN(maxVal)) {
+              currentValue = Math.min(maxVal, currentValue);
+          }
+
+          strokeWeightInput.value = Math.round(currentValue); // Use rounded value for weight
+          // Optionally trigger input event:
+          // strokeWeightInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      // Handles mousedown on the stroke weight input to initiate drag
+      function handleWeightMouseDown(e) {
+          if (e.button !== 0) return; // Only left click
+
+          const isFocused = (document.activeElement === strokeWeightInput);
+
+          // Prevent default ONLY if starting drag from an unfocused state
+          if (!isFocused) {
+              e.preventDefault();
+              strokeWeightInput.focus(); // Manually focus
+          }
+          // If focused, allow default behavior (cursor placement)
+
+          // Proceed with setting up drag state
+          isDraggingWeight = true;
+          weightDragStartX = e.clientX;
+          weightDragLastX = e.clientX;
+          weightDragCurrentValue = parseFloat(strokeWeightInput.value) || 0;
+          weightDragEngaged = false;
+          weightScalingActive = false;
+
+          // Add listeners
+          document.addEventListener('mousemove', handleWeightDragMove);
+          document.addEventListener('mouseup', handleWeightDragEnd, { once: true });
+      }
+
+
+      // Handles mouse movement during stroke weight drag
+      function handleWeightDragMove(e) {
+          if (!isDraggingWeight) return;
+          e.preventDefault(); // Prevent text selection during move
+
+          const currentX = e.clientX;
+          const deltaX = Math.abs(currentX - weightDragStartX);
+
+          // Engage cursor change visual cue
+          if (!weightDragEngaged && deltaX > 2) {
+              weightDragEngaged = true;
+              document.body.style.cursor = 'ew-resize';
+              strokeWeightInput.style.cursor = 'ew-resize';
+          }
+
+          // Activate value scaling
+          if (!weightScalingActive && deltaX > 4) {
+              weightScalingActive = true;
+              weightDragLastX = currentX;
+          }
+
+          // Perform scaling if active
+          if (weightScalingActive) {
+              const moveDeltaX = currentX - weightDragLastX;
+              const scaleFactor = e.shiftKey ? 1.0 : 0.1;
+              const valueChange = moveDeltaX * scaleFactor;
+
+              weightDragCurrentValue += valueChange;
+
+              // Clamp value
+              const minVal = parseFloat(strokeWeightInput.min) || 0;
+              const maxVal = parseFloat(strokeWeightInput.max);
+              weightDragCurrentValue = Math.max(minVal, weightDragCurrentValue);
+              if (!isNaN(maxVal)) {
+                  weightDragCurrentValue = Math.min(maxVal, weightDragCurrentValue);
+              }
+
+              strokeWeightInput.value = Math.round(weightDragCurrentValue);
+              weightDragLastX = currentX;
+          }
+      }
+
+      // Handles mouseup after stroke weight drag
+      function handleWeightDragEnd() {
+          if (!isDraggingWeight) return;
+
+          // Finalize value if scaling occurred
+          if (weightScalingActive) {
+              let finalValue = parseFloat(strokeWeightInput.value) || 0;
+              const minVal = parseFloat(strokeWeightInput.min) || 0;
+              const maxVal = parseFloat(strokeWeightInput.max);
+              finalValue = Math.max(minVal, finalValue);
+              if (!isNaN(maxVal)) {
+                  finalValue = Math.min(maxVal, finalValue);
+              }
+              strokeWeightInput.value = Math.round(finalValue);
+          }
+
+          // Reset states and listeners
+          isDraggingWeight = false;
+          weightDragEngaged = false;
+          weightScalingActive = false;
+          document.removeEventListener('mousemove', handleWeightDragMove);
+          document.body.style.cursor = '';
+          strokeWeightInput.style.cursor = '';
+      }
+
+
+      // --- Keyboard Listeners ---
+
+      // Sets up global keyboard listeners (e.g., for deleting stops)
+      function setupKeyboardListeners() {
+          document.addEventListener('keydown', (e) => {
+
+              const activeElement = document.activeElement;
+              // Check if focus is NOT inside an input/select/textarea or custom select
+              const isInputFocused = activeElement.tagName === 'INPUT' ||
+                                     activeElement.tagName === 'SELECT' ||
+                                     activeElement.tagName === 'TEXTAREA' ||
+                                     activeElement.classList.contains('select-selected') ||
+                                     activeElement.closest('.custom-select-wrapper'); // Include custom select wrapper
+
+              // Handle Delete/Backspace for selected color stop if focus is not in an input
+              if (!isInputFocused && (e.key === 'Delete' || e.key === 'Backspace')) {
+                if (selectedStopId) {
+                  // MODIFIED: Check stops length before attempting deletion
+                  if (stops.length > 2) {
+                      deleteStop(selectedStopId);
+                      e.preventDefault(); // Prevent browser back navigation on backspace
+                  } else {
+                      console.log("Cannot delete stop via keyboard: Minimum 2 stops required.");
+                  }
+                }
+              }
+          });
+      }
+
+      // --- Utility Functions ---
+      // Converts a hex color and alpha (0-1) to an rgba string
+      function hexToRgba(hex, alpha) {
+          hex = hex.replace('#', '');
+          let r, g, b;
+          if (hex.length === 3) { // Expand shorthand hex
+              r = parseInt(hex[0] + hex[0], 16);
+              g = parseInt(hex[1] + hex[1], 16);
+              b = parseInt(hex[2] + hex[2], 16);
+          } else if (hex.length === 6) { // Standard hex
+              r = parseInt(hex.substring(0, 2), 16);
+              g = parseInt(hex.substring(2, 4), 16);
+              b = parseInt(hex.substring(4, 6), 16);
+          } else { // Invalid hex
+              r = g = b = 128; // Default to gray
+          }
+          alpha = Math.max(0, Math.min(1, alpha)); // Clamp alpha 0-1
+          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      // Linearly interpolates between two hex colors based on a ratio (0-1)
+      function interpolateColor(color1, color2, ratio) {
+          const parseHex = (hex) => { // Helper to parse hex to RGB object
+              hex = (hex || '#000000').replace('#', '');
+              let r, g, b;
+              if (hex.length === 3) {
+                  r = parseInt(hex[0] + hex[0], 16); g = parseInt(hex[1] + hex[1], 16); b = parseInt(hex[2] + hex[2], 16);
+              } else if (hex.length === 6) {
+                  r = parseInt(hex.substring(0, 2), 16); g = parseInt(hex.substring(2, 4), 16); b = parseInt(hex.substring(4, 6), 16);
+              } else { return { r: 0, g: 0, b: 0 }; } // Invalid format
+              return { r, g, b };
+          };
+          const rgb1 = parseHex(color1);
+          const rgb2 = parseHex(color2);
+          const clamp = (val) => Math.max(0, Math.min(255, Math.round(val))); // Clamp 0-255 and round
+          const r = clamp(rgb1.r + (rgb2.r - rgb1.r) * ratio);
+          const g = clamp(rgb1.g + (rgb2.g - rgb1.g) * ratio);
+          const b = clamp(rgb1.b + (rgb2.b - rgb1.b) * ratio);
+          const componentToHex = (c) => c.toString(16).padStart(2, '0'); // Convert number to 2-digit hex
+          return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+      }
+
+      // Parses hex color string (#rgb, #rrggbb, #rrggbbaa, or without #)
+      // Returns { color: '#rrggbb', alphaPercent: 0-100 } or null if invalid
+      function parseHexWithOptionalAlpha(hexColor) {
+          hexColor = hexColor.trim().replace('#', ''); // Clean input
+          let r, g, b, a = 255; // Default alpha is 100% (FF)
+
+          if (/^[0-9A-Fa-f]{3}$/.test(hexColor)) { // #rgb
+              r = parseInt(hexColor[0] + hexColor[0], 16);
+              g = parseInt(hexColor[1] + hexColor[1], 16);
+              b = parseInt(hexColor[2] + hexColor[2], 16);
+          } else if (/^[0-9A-Fa-f]{6}$/.test(hexColor)) { // #rrggbb
+              r = parseInt(hexColor.substring(0, 2), 16);
+              g = parseInt(hexColor.substring(2, 4), 16);
+              b = parseInt(hexColor.substring(4, 6), 16);
+          } else if (/^[0-9A-Fa-f]{8}$/.test(hexColor)) { // #rrggbbaa
+              r = parseInt(hexColor.substring(0, 2), 16);
+              g = parseInt(hexColor.substring(2, 4), 16);
+              b = parseInt(hexColor.substring(4, 6), 16);
+              a = parseInt(hexColor.substring(6, 8), 16); // Get alpha value
+          } else {
+              return null; // Invalid format
+          }
+
+          const componentToHex = (c) => c.toString(16).padStart(2, '0');
+          const finalColor = `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+          const finalAlphaPercent = Math.round((a / 255) * 100);
+
+          return { color: finalColor, alphaPercent: finalAlphaPercent };
+      }
+
+
+      // --- Communication with Plugin (Functions) ---
+
+      // Add button click handler
+    function handleAddStopClick(event) {
+
+        // --- Fix Width BEFORE Resize Message & DOM Changes ---
+        document.body.style.overflowY = 'hidden'; // Reset body overflow
+
+        const sortedStops = [...stops].sort((a, b) => a.position - b.position);
+        let position = 50; // Default position
+        let colorData = { color: "#808080", alpha: 1 }; // Default color/alpha
+
+        if (sortedStops.length >= 2) {
+           // Find the largest gap between existing stops
+            let largestGap = 0;
+            let insertPos = 50; // Default insert position
+            for (let i = 0; i < sortedStops.length - 1; i++) {
+                let gap = sortedStops[i + 1].position - sortedStops[i].position;
+                if (gap > largestGap) {
+                    largestGap = gap;
+                    insertPos = Math.round(sortedStops[i].position + gap / 2);
+                }
+            }
+            position = insertPos;
+            colorData = getColorAtPosition(position); // Get interpolated color/alpha
+        }
+        addNewStop(position, colorData);
+    }
+
+      // Sends the final gradient data to the plugin
+      function applyGradient() {
+          try {
+              const strokeWeight = strokeWeightInput.value;
+              const startCap = document.getElementById('start-cap-value').value;
+              const endCap = document.getElementById('end-cap-value').value;
+              const strokeJoin = document.getElementById('stroke-join-value').value;
+              // Prepare stops data for the plugin (ensure position 0-100, alpha 0-1)
+              const processedStops = stops.map(stop => {
+                  return {
+                      // position: Math.max(0, Math.min(100, Number(stop.position) || 0)), // Position is already clamped
+                      position: stop.position,
+                      color: stop.color || '#000000',
+                      alpha: stop.alpha !== undefined ? Math.max(0, Math.min(1, stop.alpha)) : 1
+                  };
+              }).sort((a, b) => a.position - b.position); // Ensure sorted by position
+
+              // Error handling for stops
+              if (!Array.isArray(stops) || stops.length < 2) {
+                  console.error("Stops array invalid for apply:", stops);
+                  // Use a more user-friendly notification if possible
+                  alert("Error: Minimum 2 gradient stops required.");
+                  return;
+              }
+
+              // Send message to the plugin environment
+              parent.postMessage({
+                  pluginMessage: {
+                      type: 'apply-gradient',
+                      strokeWeight: parseFloat(strokeWeight) || 0,
+                      startCap: startCap,
+                      endCap: endCap,
+                      strokeJoin: strokeJoin,
+                      stops: processedStops
+                  }
+              }, '*'); // Use specific origin in production if possible
+          } catch (error) {
+              console.error("Error in applyGradient:", error);
+              alert("Error applying gradient: " + error.message);
+          }
+      }
+
+      // Handles messages received from the plugin
+      window.onmessage = (event) => {
+          // Basic security check (optional but recommended)
+          // if (event.origin !== 'expected_plugin_origin') return;
+
+          const msg = event.data.pluginMessage;
+          if (!msg) return; // Ignore messages not conforming to expected structure
+
+          console.log("Message from plugin:", msg); // For debugging
+
+          switch (msg.type) {
+              case 'selection-error':
+                  alert('Plugin Error: ' + (msg.message || 'Please select a single vector path.'));
+                  break;
+
+              case 'init-data': // Plugin sends initial state
+                  handleInitData(msg);
+                  break;
+
+              case 'stop-selected': // Plugin requests UI to select a stop
+                  if (msg.stopId && document.getElementById(msg.stopId)) {
+                      selectStop(msg.stopId);
+                  }
+                  break;
+              case 'show-color-picker-for-stop': // Plugin requests color picker for a stop
+                  if (msg.stopId) {
+                      const stopElement = document.getElementById(msg.stopId);
+                      const colorInput = stopElement?.querySelector('input[type="color"]');
+                      colorInput?.click();
+                  }
+                  break;
+
+              // Add other message types as needed
+          }
+      };
+
+      // Processes initial data received from the plugin
+      function handleInitData(msg) {
+          // Update Stroke Properties
+          if (msg.strokeWeight !== undefined) strokeWeightInput.value = msg.strokeWeight;
+
+          // Update Custom Selects (Start/End Caps AND Join)
+          updateCustomSelectFromData('start-cap', msg.startCap);
+          updateCustomSelectFromData('end-cap', msg.endCap);
+          updateCustomSelectFromData('stroke-join', msg.strokeJoin);
+
+          // Update Gradient Stops
+          if (Array.isArray(msg.stops) && msg.stops.length >= 2) { // Ensure at least 2 stops from plugin
+              // Clear existing non-endpoint DOM elements and editors
+              colorStops.querySelectorAll('.color-stop:not(#start-stop):not(#end-stop)')
+                  .forEach(el => el.remove());
+              allStopsContainer.innerHTML = ''; // Clear all editors
+
+              // Rebuild stops array from message (expecting position 0-100, alpha 0-1)
+              stops = msg.stops.map((pluginStop, index) => {
+                  let id = pluginStop.id; // Use ID from plugin if provided
+                  const position = Math.max(0, Math.min(100, pluginStop.position || 0));
+                  // Determine if it's structurally the first or last stop AFTER sorting
+                  // The isEndpoint flag from the plugin might be unreliable if stops were added/removed
+                  // We'll rely on the fixed IDs 'start-stop' and 'end-stop' for the actual endpoints.
+                  const isStructurallyFirst = index === 0;
+                  const isStructurallyLast = index === msg.stops.length - 1;
+
+                  // Assign fixed IDs only to the actual first and last stops based on position
+                  if (position === 0 && !id) id = 'start-stop';
+                  else if (position === 100 && !id) id = 'end-stop';
+                  else if (!id) id = `stop-${Date.now()}-${index}`; // Generate ID for intermediate stops
+
+                  return {
+                      id: id,
+                      position: position,
+                      color: pluginStop.color || '#000000',
+                      alpha: pluginStop.alpha !== undefined ? Math.max(0, Math.min(1, pluginStop.alpha)) : 1,
+                      // The isEndpoint flag is less critical now, but we can keep it for potential future use
+                      // It should ideally reflect whether it's the 0% or 100% stop.
+                      isEndpoint: (id === 'start-stop' || id === 'end-stop')
+                  };
+              }).sort((a, b) => a.position - b.position); // Sort by position
+
+              // Ensure start/end stops use the correct fixed IDs after sorting
+              if (stops.length > 0) {
+                  stops[0].id = 'start-stop';
+                  stops[0].isEndpoint = true;
+                  stops[stops.length - 1].id = 'end-stop';
+                  stops[stops.length - 1].isEndpoint = true;
+              }
+
+              // Re-render all stop elements and editors from the new array
+              stops.forEach(stop => {
+                  renderOrUpdateStopElement(stop); // Update gradient bar stop
+                  const editor = createStopEditorElement(stop); // Create editor panel
+                  allStopsContainer.appendChild(editor);
+              });
+
+              // Select the first stop after update
+              selectStop(stops[0]?.id || null);
+              updateGradient(); // Update the gradient display and button states
+              reorderStopEditors(); // Ensure editors are sorted correctly
+          } else {
+              console.warn("Initial data from plugin has less than 2 stops. Using defaults.");
+              // Keep default stops if plugin data is insufficient
+              createAllStopEditors(); // Create editors for default stops
+              updateGradient(); // Update gradient and buttons for defaults
+          }
+      }
+
+
+      // Helper to update a custom select based on received data
+      function updateCustomSelectFromData(baseId, value) {
+          if (value === undefined || value === null) return; // No value provided
+          const hiddenInput = document.getElementById(`${baseId}-value`);
+          const wrapper = hiddenInput?.closest('.custom-select-wrapper');
+          const selectDiv = wrapper?.querySelector('.custom-select');
+          const selectedDisplay = selectDiv?.querySelector('.select-selected'); // Only relevant for dropdowns
+          const options = selectDiv?.querySelectorAll('.select-option');
+
+          if (!hiddenInput || !selectDiv || !options) {
+               console.warn(`Custom select elements not found for baseId: ${baseId}`);
+               return; // Elements not found
+          }
+
+          hiddenInput.value = value; // Update hidden input
+          let found = false;
+          for (let opt of options) {
+              opt.classList.remove('same-as-selected'); // Clear previous selection style
+              if (opt.getAttribute('data-value') === value) {
+                  if (selectedDisplay) { // Update display only if it exists (not for join)
+                    selectedDisplay.innerHTML = opt.innerHTML; // Update display HTML (with icon)
+                  }
+                  opt.classList.add('same-as-selected');
+                  // Only move to top for dropdowns (not join)
+                  if (selectedDisplay) {
+                    opt.parentNode.prepend(opt);
+                  }
+                  found = true;
+                  // Don't break for join, as we need to remove class from all others
+                  if (selectedDisplay) break;
+              }
+          }
+          if (!found) { // Handle case where value doesn't match any option
+              if (selectedDisplay) selectedDisplay.innerHTML = 'Select...'; // Or display the value itself?
+              console.warn(`Value "${value}" not found in options for ${baseId}`);
+          }
+      }
+
+
+      // Creates or updates a single stop DOM element based on stop data
+      function renderOrUpdateStopElement(stopData) {
+          let stopElement = document.getElementById(stopData.id);
+
+          // Create if doesn't exist (including endpoints, as they might be missing if plugin data was bad)
+          if (!stopElement) {
+              stopElement = document.createElement('div');
+              stopElement.classList.add('color-stop');
+              stopElement.id = stopData.id;
+              stopElement.innerHTML = `
+                  <div class="color-preview"></div>
+                  <input type="color">`;
+              colorStops.appendChild(stopElement);
+              // Add handlers for the newly created element
+              setupColorInputHandler(stopData.id);
+              const preview = stopElement.querySelector('.color-preview');
+              if (preview) {
+                  preview.addEventListener('mousedown', (e) => handleStopDragStart(e, stopElement));
+              }
+          }
+
+          // Update existing element (color preview and hidden input value)
+          if (stopElement) {
+              const preview = stopElement.querySelector('.color-preview');
+              if (preview) preview.style.setProperty('--background', stopData.color);
+              const input = stopElement.querySelector('input[type="color"]');
+              if (input) input.value = stopData.color;
+              const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
+              const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
+              if (stopEditorColorPreview) stopEditorColorPreview.style.setProperty('--background', stopData.color);
+              // Position is handled separately by positionStops/updateGradient
+              // Ensure the correct endpoint IDs are set if necessary
+              if (stopData.position === 0) stopElement.id = 'start-stop';
+              if (stopData.position === 100) stopElement.id = 'end-stop';
+          }
+      }
+
+   </script>
 </body>
 </html>

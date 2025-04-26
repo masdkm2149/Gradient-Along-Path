@@ -11,6 +11,13 @@
  * - Intelligent gradient updates
  */
 
+let currentUiWidth = 258; // Example: Replace with your actual stored width
+let currentUiHeight = 400; // Example: Replace with your actual stored height
+
+// Sets the initial size of the plugin window.
+figma.showUI(__html__, { width: currentUiWidth, height: currentUiHeight });
+
+
 // --- Main Apply Function ---
 import {applyGradient} from './applyGradient';
 // --- Type Definitions ---
@@ -18,10 +25,11 @@ import { GradientStop } from './gradientTypes';
 // --- Global State Variables ---
 import { setCurrentStops, getCurrentStops } from './globalStateVariables';
 // --- UI Communication ---
-import { updateSelectionState } from './updateStateSelection';
+import { markUIReady, setupSelectionListeners, safeUpdateSelectionState } from './safeStateUpdate';
 
-// Sets the initial size of the plugin window.
-figma.showUI(__html__, { width: 258, height: 368 });
+
+markUIReady(); // Mark UI as ready immediately after showing it
+setupSelectionListeners(); // Setup selection listeners (safe even if called before UI is ready)
 
 /**
  * Handles messages received from the UI (ui.html).
@@ -29,6 +37,8 @@ figma.showUI(__html__, { width: 258, height: 368 });
 figma.ui.onmessage = (msg: {
     type: string; // Message type identifier.
     // Optional payloads based on message type:
+    width?: number; // Width for resizing the UI.
+    height?: number; // Height for resizing the UI.
     strokeWeight?: string;
     startCap?: StrokeCap;
     endCap?: StrokeCap;
@@ -91,7 +101,7 @@ figma.ui.onmessage = (msg: {
                 if (newStops.length >= 2) {
                     setCurrentStops(newStops);
                     getCurrentStops().sort((a, b) => a.position - b.position); // Keep sorted.
-                    // Inform UI about the change.
+
                     figma.ui.postMessage({ type: 'stops-updated', stops: getCurrentStops(), deletedStopId: msg.stopId });
                 } else if (initialLength >= 2) {
                     figma.notify("Can't delete stop: minimum 2 stops required");
@@ -129,7 +139,7 @@ figma.ui.onmessage = (msg: {
                  getCurrentStops().sort((a, b) => a.position - b.position); // Keep sorted.
                  // Inform UI about the new stop and its ID.
                  figma.ui.postMessage({ type: 'stops-updated', stops: getCurrentStops(), addedStopId: newId });
-             }
+                }
              break;
          }
         case 'handle-key-press': { // Keyboard event from UI (e.g., delete key).
@@ -158,9 +168,42 @@ figma.ui.onmessage = (msg: {
             break;
         }
         case 'check-selection': { // UI requests a manual selection state update.
-            updateSelectionState();
+            safeUpdateSelectionState();
             break;
         }
+        case 'resize': {         
+            let targetWidth = msg.width? msg.width : currentUiWidth;
+            let targetHeight = msg.height? msg.height : currentUiHeight;
+            let shouldResize = false;
+            const widthProvided = typeof targetWidth === 'number' && targetWidth > 0; // Check if width is a valid number and greater than 0
+            const heightProvided = typeof targetHeight === 'number' && targetHeight > 0; // Check if height is a valid number and greater than 0
+
+            if (widthProvided && heightProvided) {
+            // Case 1: Both width and height are provided and valid
+                console.log("Resizing UI (both) to:", targetWidth, targetHeight);
+                shouldResize = true;
+            } else if (widthProvided && !heightProvided) {
+            // Case 2: Only width is provided and valid
+                targetHeight = currentUiHeight; // Use the stored current height
+                console.log("Resizing UI (width only) to:", targetWidth, targetHeight, `(using current height: ${currentUiHeight})`);
+                shouldResize = true;
+            } else if (!widthProvided && heightProvided) {
+            // Case 3: Only height is provided and valid
+                targetWidth = currentUiWidth; // Use the stored current width
+                console.log("Resizing UI (height only) to:", targetWidth, targetHeight, `(using current width: ${currentUiWidth})`);
+                shouldResize = true;
+            } else {
+            // Case 4: Neither provided, or invalid values (e.g., 0, negative)
+                console.log("Resize message received without valid width or height. No resize performed.", msg);
+        }
+
+        if (shouldResize) {
+            figma.ui.resize(targetWidth, targetHeight); // Perform the resize
+            currentUiWidth = targetWidth; // Update the stored width
+            currentUiHeight = targetHeight; // Update the stored height
+            }
+        }
+        break;
         // Add other message handlers as needed.
     }
 };
