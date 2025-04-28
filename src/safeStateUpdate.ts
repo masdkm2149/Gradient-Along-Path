@@ -31,13 +31,19 @@ export function safeUpdateSelectionState(): void {
         const selectedNode = selection[0];
         if (selectedNode.type === 'VECTOR') {
              // Identify as source vector only if it's not part of a known gradient group structure.
-             const isLikelySource = !(selectedNode.parent && selectedNode.parent.name === 'Gradient Path');
+             const isLikelySource = !(selectedNode.parent && (selectedNode.parent.name === 'Gradient Path' || selectedNode.parent.name === 'Gradient Path (Opaque)'));
              if (isLikelySource) {
                 newSourceVector = selectedNode as VectorNode;
              }
         } else if (selectedNode.type === 'GROUP') {
             // Check if it's a group created by this plugin
-            if (selectedNode.name === 'Gradient Path' && selectedNode.children.length >= 2) {
+           
+            if (selectedNode.name === 'Gradient Path (Opaque)' && selectedNode.children.length > 0) {
+                // Case 1: Opaque Gradient Group (segments directly inside)
+                // We just need to check the name and that it has children (the segments)
+                newGradientGroup = selectedNode as GroupNode;
+
+           } else if (selectedNode.name === 'Gradient Path' && selectedNode.children.length >= 2) {
                  const firstChild = selectedNode.children[0]; // Should be Color Layer
                  const secondChild = selectedNode.children[1]; // Should be Mask Layer
                  // Check if the structure matches the expected output

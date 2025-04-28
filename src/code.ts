@@ -17,16 +17,14 @@ let currentUiHeight = 400; // Example: Replace with your actual stored height
 // Sets the initial size of the plugin window.
 figma.showUI(__html__, { width: currentUiWidth, height: currentUiHeight });
 
-
-// --- Main Apply Function ---
-import {applyGradient} from './applyGradient';
 // --- Type Definitions ---
 import { GradientStop } from './gradientTypes';
 // --- Global State Variables ---
 import { setCurrentStops, getCurrentStops } from './globalStateVariables';
 // --- UI Communication ---
 import { markUIReady, setupSelectionListeners, safeUpdateSelectionState } from './safeStateUpdate';
-
+// --- Output Handlers ---
+import { handleOutputMessage } from './outputHandler';
 
 markUIReady(); // Mark UI as ready immediately after showing it
 setupSelectionListeners(); // Setup selection listeners (safe even if called before UI is ready)
@@ -50,35 +48,6 @@ figma.ui.onmessage = (msg: {
     selectedStopId?: string;// ID of stop selected in UI (for delete key).
 }) => {
     switch (msg.type) {
-        case 'apply-gradient': {
-            const stops = msg.stops || [];
-            setCurrentStops([...stops]); // Update local cache.
-
-            if (stops.length < 2) {
-                figma.notify('Error: Need at least two color stops');
-                return;
-            }
-            // Ensure stops are sorted before applying.
-            stops.sort((a, b) => a.position - b.position);
-
-            const strokeWeight = parseFloat(msg.strokeWeight || '1');
-            const startCap = msg.startCap || 'NONE';
-            const endCap = msg.endCap || 'NONE';
-            const strokeJoin = msg.strokeJoin || 'MITER';
-
-            // Validate Stroke Caps - Replaced .includes with indexOf
-            const validCaps: StrokeCap[] = ['NONE', 'ROUND', 'SQUARE', 'ARROW_LINES', 'ARROW_EQUILATERAL'];
-            const validatedStartCap = validCaps.indexOf(startCap as StrokeCap) !== -1 ? startCap : 'NONE';
-            const validatedEndCap = validCaps.indexOf(endCap as StrokeCap) !== -1 ? endCap : 'NONE';
-
-            // Validate Stroke Joins - Replaced .includes with indexOf
-            const validJoins: StrokeJoin[] = ['MITER', 'BEVEL', 'ROUND'];
-            const validatedJoin = validJoins.indexOf(strokeJoin as StrokeJoin) !== -1 ? strokeJoin : 'MITER';
-
-            // Call the main apply function with validated parameters.
-            applyGradient(stops, strokeWeight, validatedStartCap, validatedEndCap, validatedJoin);
-            break;
-        }
         case 'preview-gradient': { // Handle UI previews (if implemented).
             if (msg.stops) {
                 setCurrentStops([...msg.stops]);
@@ -171,9 +140,15 @@ figma.ui.onmessage = (msg: {
             safeUpdateSelectionState();
             break;
         }
+        case 'apply-vector': 
+        case 'apply-image': {
+            // Forward these output-related messages to the outputHandler
+            handleOutputMessage(msg);
+            break;
+        }
         case 'resize': {         
-            let targetWidth = msg.width? msg.width : currentUiWidth;
-            let targetHeight = msg.height? msg.height : currentUiHeight;
+            let targetWidth = msg.width? msg.width : 0;
+            let targetHeight = msg.height? msg.height : 0;
             let shouldResize = false;
             const widthProvided = typeof targetWidth === 'number' && targetWidth > 0; // Check if width is a valid number and greater than 0
             const heightProvided = typeof targetHeight === 'number' && targetHeight > 0; // Check if height is a valid number and greater than 0
@@ -198,7 +173,7 @@ figma.ui.onmessage = (msg: {
         }
 
         if (shouldResize) {
-            figma.ui.resize(targetWidth, targetHeight); // Perform the resize
+            figma.ui.resize(targetWidth as number, targetHeight as number); // Perform the resize
             currentUiWidth = targetWidth; // Update the stored width
             currentUiHeight = targetHeight; // Update the stored height
             }

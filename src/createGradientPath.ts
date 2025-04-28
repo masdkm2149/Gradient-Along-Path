@@ -311,14 +311,7 @@ export async function createGradientPath(
         colorSegment.strokeWeight = strokeWeight;
         colorSegment.strokeCap = 'ROUND'; // Default internal cap for smooth joins
         colorSegment.strokeJoin = strokeJoin;
-        
-        if (isFullyOpaque) {
-            // For opaque gradients, just use the color directly
-            colorSegment.strokes = [{ type: 'SOLID', color: { r: safeColor.r, g: safeColor.g, b: safeColor.b }, opacity: 1 }];
-        } else {
-            // For transparent gradients, use the alpha value directly on the color segment
-            colorSegment.strokes = [{ type: 'SOLID', color: { r: safeColor.r, g: safeColor.g, b: safeColor.b }, opacity: safeColor.a }];
-        }
+        colorSegment.strokes = [{ type: 'SOLID', color: { r: safeColor.r, g: safeColor.g, b: safeColor.b }, opacity: 1 }];
         
         colorSegment.fills = [];
         colorSegments.push(colorSegment);

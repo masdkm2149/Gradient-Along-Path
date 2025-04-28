@@ -8,12 +8,13 @@
     --color-primary-darkened: #275F88; /* Darker blue */
     --color-secondary: #383838; /* Dark gray */
     --color-form-background: #2C2C2C; /* Border color */
-    --color-background: #1E1E1E; /* Slightly less dark gray */
+    --color-background: #1E1E1E; /* Slightly more dark gray */
     --color-icons-lighter: #e9e9e9; /* Dark gray */
     --color-icons: #dddddd; /* Darker gray */
      --color-icons-darker: #bbbbbb; /* Light gray for icons */
   }
   body {
+    user-select: none;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 11.3px;
     padding: 8px;
@@ -71,12 +72,11 @@
   }
   input[type="text"].stop-color {
     margin-left: 8px;
-    text-indent: -7px;
     margin-inline-end: 3px;
     padding-left: 23px;
     width: 96%;
   }
-
+  .apply-button-container{padding-bottom: 15px; margin: auto;}
   /* Default width for text inputs (like hex color) */
   input[type="number"]#stroke-weight {
     width: 4.5rem;
@@ -100,7 +100,7 @@
     border: none;
   }
 
-  input.stop-position:focus, button:not(.remove-stop-btn):not(#add-stop-btn):focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input.stop-color:focus, .input-row.color-selection:has(input.stop-alpha:focus) input.stop-color , input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
+  input.stop-position:focus, button:not(.remove-stop-btn):not(#add-stop-btn):not(#swap-stop-positions):focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input.stop-color:focus, .input-row.color-selection:has(input.stop-alpha:focus) input.stop-color , input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
     outline: none;
     box-shadow: 0 0 0 2px var(--color-primary); /* Blue outline on focus */
   }
@@ -113,7 +113,8 @@
   .gradient-container {
     position: relative;
     height: 3rem;
-    width: 90%;
+    width: 100%;
+    max-width: 218px; /* Add a maximum width */
     margin: 1rem auto 0.5rem auto;
   }
   .gradient-bar {
@@ -186,11 +187,36 @@
     position: absolute;
     background: var(--background);
   }
-  
+  .current-stop-preview-container {
+    left: 13.4px;
+    z-index: 1;
+    position: absolute
+  }
   .color-preview::before {
     content: "";
     height: 1rem;
     z-index: -1;
+    position: absolute;
+    background: var(--before-background);
+  }
+  .current-stop-preview {background: var(--after-background);}
+  .current-stop-preview::after {
+    content: "";
+    width: 6.5px;
+    height: 12px;
+    position: absolute;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    background: var(--background);
+  }
+  .current-stop-preview::before {
+    content: "";
+    z-index: -1;
+    left: 50%;
+    width: 6px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    height: 12px;
     position: absolute;
     background: var(--before-background);
   }
@@ -223,13 +249,29 @@
     padding: 0.65rem;
 
   }
+
+  .stop-buttons-container {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: -0.2rem;
+    margin-right: .25rem;
+  }
   .stops-panel-header {
     display: flex;
     flex-direction: row;
-    margin-left: 1.5px;
+    padding: 0 .2rem;
     margin-bottom: .5rem;
+    margin-top: -0.25rem;
     justify-content: space-between;
   }
+  button#swap-stop-positions {
+    background: none;
+    color: var(--color-icons-darker);
+    font-weight: 300;
+    width: 25px;
+    padding: 6px;
+    height: 24px;
+}
   button#add-stop-btn, button.remove-stop-btn {
     padding: 2px 6px;
     background: none;
@@ -238,7 +280,7 @@
   button:hover {
     background-color: var(--color-form-background);
   }
-  button#add-stop-btn:active, button#add-stop-btn:active:focus, button#add-stop-btn:active:hover, button.remove-stop-btn:active, button.remove-stop-btn:active:focus, button.remove-stop-btn:not(:disabled):hover:active {
+  button#swap-stop-positions:active, button#add-stop-btn:active, button#add-stop-btn:active:focus, button#swap-stop-positions:active:focus, button#add-stop-btn:active:hover, button#swap-stop-positions:active:hover, button.remove-stop-btn:active, button.remove-stop-btn:active:focus, button.remove-stop-btn:not(:disabled):hover:active {
     background-color: var(--color-secondary);
   }
   .stop-editor {
@@ -258,20 +300,17 @@
   .section.stroke-properties {
     margin: 0;
   }
-  /* Original '+' button styles */
   button#add-stop-btn {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     font-size: 1.6rem;
-    margin-top:-0.2rem;
-    padding: 0;
     color: var(--color-icons-darker);
     font-weight: 300;
-    position: absolute;
-    right: 1.7rem;
-    height: 0px;
-    line-height: 0;
-    padding: 8px 3px 14px 3px;
-  }
+    width: min-content;
+    height: 24;
+    line-height: 46.5%;
+    display: flex;
+    padding: 4px;
+}
   button.remove-stop-btn {
     background: none;
     padding: 0;
@@ -289,7 +328,7 @@
     cursor: not-allowed; /* Indicate it's not clickable */
     background-color: transparent; /* Ensure no hover effect */
   }
-  button#add-stop-btn:hover, button.remove-stop-btn:not(:disabled):hover, .settings:hover {
+  button#add-stop-btn:hover, button#swap-stop-positions:hover, button.remove-stop-btn:not(:disabled):hover, .settings:hover {
       background-color: var(--color-form-background); /* Match other buttons */
    }
    .line-break-vertical {
@@ -303,10 +342,8 @@
   .current-stop-preview {
     width: 12px;
     height: 12px;
-    border: 1px solid var(--color-secondary);
-    border-radius: 3px;
-    position: absolute;
-    margin-left: 13.4px;
+    border-radius: 2.5px;
+    position: static;
     cursor: pointer;
   }
   label[for="stop-alpha"] {
@@ -337,25 +374,23 @@
     font-weight: 600;
   }
 
-/* --- CSS Modifications (Targeted) --- */
-
+.label[for="stroke-join-value"] {margin-left: 3px;}
 /* Keep options always visible ONLY for the join selector */
 .custom-select-wrapper.join-options-visible .select-items {
   /* Change from absolute positioning */
-  position: static;
+  position: relative;
   /* Remove dropdown-specific styles */
   border: none;
   display: flex;
   flex-direction: row;
   gap: 4px;
   border-radius: 5px;
+  left: 3px;
   background-color: var(--color-form-background);
-  padding: 2px 0;
-  /* Remove height/overflow constraints */
+  padding: 2px;
+  width: fit-content;
   max-height: none;
   overflow-y: visible;
-  padding-inline-start: 2px;
-  padding-inline-end: 2px;
   align-items: center;
 }
 .custom-select-wrapper.join-options-visible{
@@ -380,7 +415,6 @@
   /* --- Custom Select Styles --- */
   .custom-select-wrapper {
       position: relative;
-      min-width: 5.6rem;
       font-size: 11.3px;
       color: var(--color-icons-lighter);
   }
@@ -524,7 +558,7 @@ white-space: nowrap; /* Prevent wrapping */
 }
 
 /* Show the tooltip on hover */
-.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip {
+.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip, button#swap-stop-positions:hover .custom-tooltip, button#add-stop-btn:hover .custom-tooltip {
 visibility: visible;
 opacity: 1;
 }
@@ -575,9 +609,8 @@ div#end-stop {
   height: 20px;
   padding: 4px;
   border-radius: 6px;
-  position: fixed;
+  position: relative;
   color: var(--color-icons-darker);
-  right: 16px;
 }
 .select-selected span {
 width: 50px;
@@ -595,7 +628,21 @@ overflow: hidden;
 min-width: 6.5rem;
 }
 
-
+/* Firefox */
+html {
+    scrollbar-color: #666666 var(--color-background); /* Handle color and track color */
+}
+@media (min-width: 275px)  {
+    .stops-panel {
+        min-width: calc(100% - 1rem); 
+    }
+    button#add-stop-btn:hover span {
+        margin-left: 5px;
+    }
+    button#swap-stop-positions:hover span {
+        margin-left: 4.4px;
+    }
+}
 </style>
       </head>
 <body>
@@ -730,7 +777,7 @@ min-width: 6.5rem;
         </div>
       </div>
 
-      <div class="section">
+    <div class="section">
         <div class="gradient-container">
           <div class="gradient-bar" id="gradient-bar"></div>
           <div class="color-stops" id="color-stops">
@@ -746,13 +793,24 @@ min-width: 6.5rem;
         </div>
 
         <div class="stops-panel">
-          <div class="stops-panel-header">
-            <div class="label">Stops</div>
-            <button id="add-stop-btn">+</button>
-          </div>
-          </div>
-      </div>
-      <button onclick="applyGradient()">Apply</button>
+            <div class="stops-panel-header">
+                <div class="label">Stops</div>
+                <div class="stop-buttons-container">
+                    <button id="render-image-btn" class="action-button">Render as Image</button>
+                    <button id="swap-stop-positions">
+                        <span class="custom-tooltip" style="transform: translate(46.5px, 213px); z-index: 5;">Flip</span>
+                        <svg width="11" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.35447 0.920283C3.40095 0.870224 3.43782 0.810796 3.46297 0.74539C3.48813 0.679985 3.50108 0.609884 3.50108 0.53909C3.50108 0.468295 3.48813 0.398194 3.46297 0.332789C3.43782 0.267383 3.40095 0.207955 3.35447 0.157896C3.30798 0.107837 3.2528 0.0681275 3.19207 0.0410358C3.13134 0.013944 3.06625 -5.27457e-10 3.00051 0C2.93477 5.27459e-10 2.86968 0.013944 2.80895 0.0410358C2.74822 0.0681276 2.69304 0.107837 2.64656 0.157896L0.146875 2.84994C0.100317 2.89996 0.0633792 2.95937 0.038176 3.02478C0.0129727 3.09019 0 3.16032 0 3.23114C0 3.30196 0.0129727 3.37208 0.038176 3.43749C0.0633792 3.5029 0.100317 3.56232 0.146875 3.61233L2.64656 6.30438C2.74043 6.40547 2.86775 6.46227 3.00051 6.46227C3.13327 6.46227 3.26059 6.40547 3.35447 6.30438C3.44834 6.20328 3.50108 6.06616 3.50108 5.92318C3.50108 5.78021 3.44834 5.64309 3.35447 5.54199L1.70768 3.76954H13.4992C13.6318 3.76954 13.7589 3.71282 13.8527 3.61185C13.9464 3.51088 13.9991 3.37393 13.9991 3.23114C13.9991 3.08834 13.9464 2.95139 13.8527 2.85042C13.7589 2.74945 13.6318 2.69273 13.4992 2.69273H1.70768L3.35447 0.920283ZM10.6455 8.45801C10.5517 8.35691 10.4989 8.21979 10.4989 8.07682C10.4989 7.93384 10.5517 7.79672 10.6455 7.69563C10.7394 7.59453 10.8667 7.53773 10.9995 7.53773C11.1322 7.53773 11.2596 7.59453 11.3534 7.69563L13.8531 10.3877C13.8997 10.4377 13.9366 10.4971 13.9618 10.5625C13.987 10.6279 14 10.698 14 10.7689C14 10.8397 13.987 10.9098 13.9618 10.9752C13.9366 11.0406 13.8997 11.1 13.8531 11.1501L11.3534 13.8421C11.2596 13.9432 11.1322 14 10.9995 14C10.8667 14 10.7394 13.9432 10.6455 13.8421C10.5517 13.741 10.4989 13.6039 10.4989 13.4609C10.4989 13.3179 10.5517 13.1808 10.6455 13.0797L12.2923 11.3073H0.50083C0.368238 11.3073 0.241078 11.2505 0.147321 11.1496C0.0535653 11.0486 0.000893479 10.9117 0.000893479 10.7689C0.000893479 10.6261 0.0535653 10.4891 0.147321 10.3882C0.241078 10.2872 0.368238 10.2305 0.50083 10.2305H12.2923L10.6455 8.45801Z" fill="white" style="fill: var(--color-icons-darker);"></path>
+                        </svg>
+                    </button>
+                    <button id="add-stop-btn">+ <span class="custom-tooltip" style="transform: translate(75px, 213px); z-index: 5;">Add</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+      <div class="apply-button-container">
+        <button onclick="applyGradient('apply-vector')">Apply</button>
+    </div>
     </div>
    <script>
 // --- DOM Element References ---
@@ -826,7 +884,6 @@ window.addEventListener('resize', () => {
    positionStops();
    updateGradient(); // Redraw gradient as bar width changes
 });
-
 
 // --- Custom Select Dropdown Logic ---
 
@@ -988,15 +1045,18 @@ function createStopEditorElement(stop) {
     colorRow.className = 'input-row color-selection';
 
     // Color preview element
+    const stopEditorColorPreviewContainer = document.createElement('div');
+    stopEditorColorPreviewContainer.className = 'current-stop-preview-container';
+    colorRow.appendChild(stopEditorColorPreviewContainer);
     const stopEditorColorPreview = document.createElement('div');
     stopEditorColorPreview.className = 'current-stop-preview';
-    colorRow.appendChild(stopEditorColorPreview);
+    stopEditorColorPreviewContainer.appendChild(stopEditorColorPreview);
 
     // Color input
     const colorInput = document.createElement('input');
     colorInput.type = 'text';
     colorInput.className = 'stop-color';
-    colorInput.value = stop.color;
+    colorInput.value = stop.color.replace('#', '');
     colorRow.appendChild(colorInput);
 
     // Divider
@@ -1033,7 +1093,6 @@ function createStopEditorElement(stop) {
 
     // Add event listeners to inputs
     setupStopEditorListeners(stopEditor, stop.id);
-
     return stopEditor;
 }
 
@@ -1130,7 +1189,7 @@ function setupStopEditorListeners(editorElement, stopId) {
     });
      colorInput.addEventListener('blur', (e) => { // Ensure formatting on blur
          const stop = stops.find(s => s.id === stopId);
-         if (stop) e.target.value = stop.color; // Revert to #rrggbb format
+         if (stop) e.target.value = stop.color.replace('#', ''); // Revert to #rrggbb format
      });
 
 
@@ -1368,9 +1427,7 @@ function updateGradient() {
 
 // Update an individual stop editor with current values
 function updateStopEditorValues(stop) {
-    console.log(`updateStopEditorValues called for stop ID: ${stop.id}`); // <-- Add this
     const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
-    console.log('Found editor element:', editor); // <-- here we get an error returning null
     if (!editor) return;
     const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
     const positionInput = editor.querySelector('.stop-position');
@@ -1384,17 +1441,51 @@ function updateStopEditorValues(stop) {
     }
     // Only update inputs if currently unfocused to avoid disrupting typing
     if (positionInput && document.activeElement !== positionInput) positionInput.value = `${stop.position}%`; // Set the position value
-    if (colorInput && document.activeElement !== colorInput) colorInput.value = stop.color; // Update the preview square in the editor panel
+    if (colorInput && document.activeElement !== colorInput) colorInput.value = stop.color.replace('#', ''); // Update the preview square in the editor panel
     if (alphaInput && document.activeElement !== alphaInput) alphaInput.value = Math.round(stop.alpha * 100); // Set the alpha value
+}
+
+/**
+ * Calculates the width of the browser's vertical scrollbar.
+ *
+ * This function creates a temporary, hidden div element,
+ * forces a scrollbar to appear on it, measures the difference
+ * between its outer width (including scrollbar) and inner width
+ * (excluding scrollbar), and then removes the temporary element.
+ *
+ * @returns {number} The width of the scrollbar in pixels.
+ */
+ function getScrollbarWidth() {
+  // Create a temporary outer div
+  const outer = document.createElement('div');
+  outer.style.visibility = 'hidden'; // Keep it hidden
+  outer.style.overflow = 'scroll'; // Force a scrollbar
+  // The following line is needed for MS Edge browser
+  outer.style.msOverflowStyle = 'scrollbar';
+  document.body.appendChild(outer); // Add it to the DOM to measure
+
+  // Create a temporary inner div
+  const inner = document.createElement('div');
+  outer.appendChild(inner);
+
+  // Calculate the difference between the outer width and inner width
+  // offsetWidth includes border, padding, and scrollbar
+  // clientWidth includes padding but not border, margin, or scrollbar
+  const scrollbarWidth = outer.offsetWidth - outer.clientWidth;
+
+  // Remove the temporary element from the DOM
+  outer.parentNode.removeChild(outer);
+  document.body.style.overflowY = 'scroll'; // Force a scrollbar
+  return scrollbarWidth;
 }
 
 // Adds a new color stop to the data model and the DOM
 function addNewStop(position, colorData) {
-
+    let finalHeight = (baseHeight + ((stops.length + 1) * heightPerStop)) // Calculate the required height based on the number of stops
     parent.postMessage({ // Send the resize message to the Figma plugin environment
         pluginMessage: {
             type: 'resize',
-            height: (baseHeight + ((stops.length + 1) * heightPerStop)) // Calculate the required height based on the number of stops
+            height: finalHeight // Calculate the required height based on the number of stops
         }
     }, '*'); // Use a specific origin in production if possible
 
@@ -1437,51 +1528,19 @@ function addNewStop(position, colorData) {
     positionStops();    // Position uses the (now stable) offsetWidth
     updateGradient();   // Update gradient display, etc. (this now updates button states)
     selectStop(stopId); // Select the newly added stop
-        // Send the resize message to the Figma plugin environment
-        parent.postMessage({
-            pluginMessage: {
-                type: 'resize',
-                width: (baseWidth + (((document.body.scrollHeight - 26) > document.body.clientHeight) ? getScrollbarWidth() : 0)),
-            }
-        }, '*'); // Use a specific origin in production if possible;
-
-// Calculate the final width
-console.log('body scroll height:', (document.body.scrollHeight - 26), 'client height:', document.body.clientHeight);
-
-}
-
-/**
- * Calculates the width of the browser's vertical scrollbar.
- *
- * This function creates a temporary, hidden div element,
- * forces a scrollbar to appear on it, measures the difference
- * between its outer width (including scrollbar) and inner width
- * (excluding scrollbar), and then removes the temporary element.
- *
- * @returns {number} The width of the scrollbar in pixels.
- */
- function getScrollbarWidth() {
-  // Create a temporary outer div
-  const outer = document.createElement('div');
-  outer.style.visibility = 'hidden'; // Keep it hidden
-  outer.style.overflow = 'scroll'; // Force a scrollbar
-  // The following line is needed for MS Edge browser
-  outer.style.msOverflowStyle = 'scrollbar';
-  document.body.appendChild(outer); // Add it to the DOM to measure
-
-  // Create a temporary inner div
-  const inner = document.createElement('div');
-  outer.appendChild(inner);
-
-  // Calculate the difference between the outer width and inner width
-  // offsetWidth includes border, padding, and scrollbar
-  // clientWidth includes padding but not border, margin, or scrollbar
-  const scrollbarWidth = outer.offsetWidth - outer.clientWidth;
-
-  // Remove the temporary element from the DOM
-  outer.parentNode.removeChild(outer);
-  document.body.style.overflowY = 'scroll'; // Force a scrollbar
-  return scrollbarWidth;
+    setTimeout(() => {
+        const bodyHeight = document.body.clientHeight;
+        if (document.documentElement.scrollHeight > bodyHeight) {
+            const finalWidth = baseWidth + getScrollbarWidth(); // Calculate the final width
+            console.log('body scroll height:', (document.documentElement.scrollHeight), 'body height:', bodyHeight);
+            parent.postMessage({ // Send the resize message to the Figma plugin environment
+                pluginMessage: {
+                    type: 'resize',
+                    width: finalWidth,
+                }
+            }, '*'); // Use a specific origin in production if possible;
+                    }
+    }, 10); // Adjust the timeout duration as needed
 }
 
       // --- Send dynamic resize message ---
@@ -1568,7 +1627,7 @@ function setupColorInputHandler(stopId) {
                 stopObj.color = e.target.value; // Update color in data model
                 if (colorPreview) colorPreview.style.setProperty('--background',  e.target.value); // Update preview visually
                 const editor = allStopsContainer.querySelector(`.stop-editor[data-stop-id="${stop.id}"]`);
-                const stopEditorColorPreview = editor.querySelector('.current-stop-preview');
+                const stopEditorColorPreview = editor?.querySelector('.current-stop-preview');
                 if (stopEditorColorPreview) stopEditorColorPreview.style.setProperty('--background', e.target.value); // Update editor preview
                 updateGradient(); // Redraw gradient and update editor
             }
@@ -2028,47 +2087,55 @@ function setupWeightDragListeners() {
         addNewStop(position, colorData);
     }
 
-      // Sends the final gradient data to the plugin
-      function applyGradient() {
-          try {
-              const strokeWeight = strokeWeightInput.value;
-              const startCap = document.getElementById('start-cap-value').value;
-              const endCap = document.getElementById('end-cap-value').value;
-              const strokeJoin = document.getElementById('stroke-join-value').value;
-              // Prepare stops data for the plugin (ensure position 0-100, alpha 0-1)
-              const processedStops = stops.map(stop => {
-                  return {
-                      // position: Math.max(0, Math.min(100, Number(stop.position) || 0)), // Position is already clamped
-                      position: stop.position,
-                      color: stop.color || '#000000',
-                      alpha: stop.alpha !== undefined ? Math.max(0, Math.min(1, stop.alpha)) : 1
-                  };
-              }).sort((a, b) => a.position - b.position); // Ensure sorted by position
+    function applyGradient(outputType = 'apply-vector') {
+    try {
+        const strokeWeightInput = document.getElementById('stroke-weight');
+        const strokeWeight = strokeWeightInput.value;
+        const startCap = document.getElementById('start-cap-value').value;
+        const endCap = document.getElementById('end-cap-value').value;
+        const strokeJoin = document.getElementById('stroke-join-value').value;
+        
+        // Error handling for stops
+        if (!Array.isArray(stops) || stops.length < 2) {
+            console.error("Stops array invalid for apply:", stops);
+            // Use a more user-friendly notification if possible
+            alert("Error: Minimum 2 gradient stops required.");
+            return;
+        }
+        
+        // Prepare stops data for the plugin (ensure position 0-100, alpha 0-1)
+        const processedStops = stops.map(stop => {
+            return {
+                id: stop.id, // Make sure to preserve the ID
+                position: stop.position,
+                color: stop.color || '#000000',
+                alpha: stop.alpha !== undefined ? Math.max(0, Math.min(1, stop.alpha)) : 1,
+                isEndpoint: stop.isEndpoint || false // Preserve endpoint status
+            };
+        }).sort((a, b) => a.position - b.position); // Ensure sorted by position
+        
+        // Send message to the plugin environment
+        parent.postMessage({
+            pluginMessage: {
+                type: outputType,
+                stops: processedStops,
+                strokeWeight: strokeWeight,
+                startCap: startCap,
+                endCap: endCap,
+                strokeJoin: strokeJoin,
+            }
+        }, '*');
+    } catch (error) {
+        console.error("Error in applyGradient:", error);
+        alert("Error applying gradient: " + (error.message || String(error)));
+    }
+}
 
-              // Error handling for stops
-              if (!Array.isArray(stops) || stops.length < 2) {
-                  console.error("Stops array invalid for apply:", stops);
-                  // Use a more user-friendly notification if possible
-                  alert("Error: Minimum 2 gradient stops required.");
-                  return;
-              }
 
-              // Send message to the plugin environment
-              parent.postMessage({
-                  pluginMessage: {
-                      type: 'apply-gradient',
-                      strokeWeight: parseFloat(strokeWeight) || 0,
-                      startCap: startCap,
-                      endCap: endCap,
-                      strokeJoin: strokeJoin,
-                      stops: processedStops
-                  }
-              }, '*'); // Use specific origin in production if possible
-          } catch (error) {
-              console.error("Error in applyGradient:", error);
-              alert("Error applying gradient: " + error.message);
-          }
-      }
+// Event listener for the "Apply as Image" button
+document.getElementById('render-image-btn').addEventListener('click', () => {
+    applyGradient('apply-image');
+});
 
       // Handles messages received from the plugin
       window.onmessage = (event) => {
