@@ -87,7 +87,7 @@ export async function handleApplyAndRenderImage(
             return;
             }
             // Now render that gradient group as an image
-            await renderAsImage(nodeCheck as SceneNode);
+            await renderAsImage(nodeCheck as SceneNode, strokeWeight);
             console.log('Image gradient output completed.');
     
         } catch (nodeError) {

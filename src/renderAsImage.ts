@@ -6,7 +6,7 @@
  * @param sourceNode The specific vector SceneNode to render and then remove. Must be provided.
  */
 
-export async function renderAsImage(sourceNode: SceneNode): Promise<void> {
+export async function renderAsImage(sourceNode: SceneNode, strokeWeight: number = 0 ): Promise<void> {
     // --- Initial Checks ---
     if (!sourceNode || !sourceNode.id) {
         figma.notify("Error: Invalid or missing node provided for rendering.");
@@ -67,14 +67,19 @@ export async function renderAsImage(sourceNode: SceneNode): Promise<void> {
         // --- Create Image Rectangle ---
         const rect = figma.createRectangle();
         rect.name = `${sourceNode.name} (Rasterized)`;
-        rect.resize(originalWidth, originalHeight); // Use stored dimensions
-        rect.x = originalX; // Position based on stored original position
-        rect.y = originalY;
+        // Adjust both dimensions while maintaining the aspect ratio
+        const adjustedWidth = originalWidth + strokeWeight;
+        // Calculate the new height that preserves the aspect ratio
+        const adjustedHeight = originalHeight + strokeWeight;
+        // Resize the rectangle with the adjusted dimensions
+        rect.resize(adjustedWidth, adjustedHeight);
+        rect.x = originalX - strokeWeight/2; // Adjust X position to account for stroke weight
+        rect.y = originalY - strokeWeight/2; // Adjust Y position to account for stroke weight
 
         const image = figma.createImage(bytes);
         rect.fills = [{
             type: "IMAGE",
-            scaleMode: "FILL",
+            scaleMode: "FIT",
             imageHash: image.hash
         }];
 

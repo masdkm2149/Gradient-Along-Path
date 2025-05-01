@@ -20,7 +20,7 @@
     padding: 8px;
     margin: 0;
     overflow-x: hidden; /* Prevent horizontal scroll */
-    overflow-y: visible;
+    overflow-y: hidden;
     background: var(--color-background); /* Figma's dark background */
     color: #FFFFFF; /* White text */
   }
@@ -100,7 +100,7 @@
     border: none;
   }
 
-  input.stop-position:focus, button:not(.remove-stop-btn):not(#add-stop-btn):not(#swap-stop-positions):focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input.stop-color:focus, .input-row.color-selection:has(input.stop-alpha:focus) input.stop-color , input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
+  input.stop-position:focus, button:not(#exit-settings):not(.remove-stop-btn):not(#add-stop-btn):not(#swap-stop-positions):focus, .custom-select:has(.select-hide) .select-selected:focus:not(:active), .highlight, input.stop-color:focus, .input-row.color-selection:has(input.stop-alpha:focus) input.stop-color , input[type="number"]:focus, select:focus { /* Updated focus selector for custom select */
     outline: none;
     box-shadow: 0 0 0 2px var(--color-primary); /* Blue outline on focus */
   }
@@ -127,6 +127,9 @@
     position: absolute;
     top: 1rem;
     cursor: pointer; /* Add cursor pointer to indicate clickable area */
+  }
+ .stop-editor:has(input.stop-alpha) input.stop-alpha, .stop-editor:has(label[for="stop-alpha"]) label[for="stop-alpha"] {
+    cursor: text;
   }
   .color-stops {
     position: relative;
@@ -280,7 +283,7 @@
   button:hover {
     background-color: var(--color-form-background);
   }
-  button#swap-stop-positions:active, button#add-stop-btn:active, button#add-stop-btn:active:focus, button#swap-stop-positions:active:focus, button#add-stop-btn:active:hover, button#swap-stop-positions:active:hover, button.remove-stop-btn:active, button.remove-stop-btn:active:focus, button.remove-stop-btn:not(:disabled):hover:active {
+  button#swap-stop-positions:active, button#exit-settings:active, button#exit-settings:focus button#add-stop-btn:active, button#add-stop-btn:active:focus, button#swap-stop-positions:active:focus, button#add-stop-btn:active:hover, button#swap-stop-positions:active:hover, button.remove-stop-btn:active, button.remove-stop-btn:active:focus, button.remove-stop-btn:not(:disabled):hover:active {
     background-color: var(--color-secondary);
   }
   .stop-editor {
@@ -328,8 +331,16 @@
     cursor: not-allowed; /* Indicate it's not clickable */
     background-color: transparent; /* Ensure no hover effect */
   }
-  button#add-stop-btn:hover, button#swap-stop-positions:hover, button.remove-stop-btn:not(:disabled):hover, .settings:hover {
+  button#add-stop-btn:hover, button#exit-settings:hover:not(:active), button#swap-stop-positions:hover, button.remove-stop-btn:not(:disabled):hover, .settings:hover {
       background-color: var(--color-form-background); /* Match other buttons */
+   }
+   .tooltips:has(svg#visible:hover) {
+    transition: ease 50ms;
+    background-color: var(--color-form-background);
+    cursor: pointer;
+   }
+   svg#hidden {
+    margin-top: 1.5px;
    }
    .line-break-vertical {
       width: 1px;
@@ -368,7 +379,7 @@
     margin-bottom: .2rem;
   }*/
   input#stroke-weight {}
-  .label[for="start-cap-value"], .label[for="end-cap-value"], .label#stroke-weight-label, .label[for="stroke-join-value"] { /* Updated selector for weight/join label */
+  .label[for="start-cap-value"], .label[for="stops-display"], .label[for="output-path-type"], .label[for="end-cap-value"], .label#stroke-weight-label, .label[for="stroke-join-value"] { /* Updated selector for weight/join label */
     color: var(--color-icons-darker);
     font-size: 10.8px;
     font-weight: 600;
@@ -558,10 +569,25 @@ white-space: nowrap; /* Prevent wrapping */
 }
 
 /* Show the tooltip on hover */
-.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip, button#swap-stop-positions:hover .custom-tooltip, button#add-stop-btn:hover .custom-tooltip {
+.custom-select-wrapper.join-options-visible .select-option:hover .custom-tooltip {
 visibility: visible;
 opacity: 1;
 }
+
+button#swap-stop-positions:hover .custom-tooltip, button#add-stop-btn:hover .custom-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 400ms; /* Delay the tooltip to display on prolonged hover */
+}
+/* Tooltip for color stops */
+.input-row.color-selection:has(input[type="number"].stop-alpha:hover) span.custom-tooltip, .input-row.color-selection:has(input[type="number"].stop-alpha:hover):has(:hover) span.custom-tooltip:hover {
+    transform: translate(28px,0px);
+    transition-delay: 1s; /* Delay the tooltip to display on prolonged hover */
+    visibility: visible;
+    opacity: 1;
+    cursor: text;
+}
+
 /* Outer border/arrow */
 .custom-tooltip::before {
 content: "";
@@ -588,6 +614,10 @@ border-color: var(--color-secondary) transparent transparent transparent;
 /* Style for selected stop editor */
 .stop-editor.selected { background-color: #0078ce52; border-radius: 7px; border: 1px solid var(--color-primary); }
 
+span.custom-tooltip.hidden {
+    display: none;
+}
+
 .stop-editor.selected:has(input:focus) {
 background-color: #0078ce0a;    
 border-color: #0078ce1c;
@@ -607,6 +637,7 @@ div#end-stop {
 
 .settings {
   height: 20px;
+  left: 3px;
   padding: 4px;
   border-radius: 6px;
   position: relative;
@@ -633,8 +664,12 @@ html {
     scrollbar-color: #666666 var(--color-background); /* Handle color and track color */
 }
 @media (min-width: 275px)  {
+    body {
+        margin: auto;
+        position: absolute;
+    }
     .stops-panel {
-        min-width: calc(100% - 1rem); 
+        min-width: calc(100% - 1.25rem); 
     }
     button#add-stop-btn:hover span {
         margin-left: 5px;
@@ -643,6 +678,52 @@ html {
         margin-left: 4.4px;
     }
 }
+
+/* Setting Panel */
+.settings-panel {
+    top: 0;
+    left: 0;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background: var(--color-background);
+    z-index: 99;
+}
+.settings-container:has(.input-column) .input-column {
+    flex: 1 1;
+}
+.settings-container:has(.select-selected span) .select-selected span {
+    width: 90%;
+}
+.settings-container {
+    position: absolute;
+    height: calc(100% - 2.5rem);
+    width: calc(100% - 2.5rem);
+    padding: 1.25rem;
+    flex-direction: column;
+    gap: .75rem;
+    display: inline-flex;
+}
+.settings-container:has(h2) h2 {
+    margin: -.25rem 0 .25rem 0;
+    gap: 8px;
+}
+button#exit-settings {
+    padding: 0px;
+    background: none;
+    display: flex;
+    height: 28px;
+    margin: -5 -3 0 0;
+}
+.visibility-container .tooltips input#tooltips-visibility:checked svg#visible {
+    visibility: visible;
+    opacity: 1;
+}
+input#tooltips-visibility:not(:checked) + .visibility-container .tooltips #button-container svg#visible {
+    visibility: hidden;
+    opacity: 0;
+}
+input#tooltips-visibility {opacity: 0; visibility: hidden; display: none;}
 </style>
       </head>
 <body>
@@ -796,7 +877,6 @@ html {
             <div class="stops-panel-header">
                 <div class="label">Stops</div>
                 <div class="stop-buttons-container">
-                    <button id="render-image-btn" class="action-button">Render as Image</button>
                     <button id="swap-stop-positions">
                         <span class="custom-tooltip" style="transform: translate(46.5px, 213px); z-index: 5;">Flip</span>
                         <svg width="11" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="">
@@ -809,7 +889,7 @@ html {
         </div>
     </div>
       <div class="apply-button-container">
-        <button onclick="applyGradient('apply-vector')">Apply</button>
+        <button>Apply</button>
     </div>
     </div>
    <script>
@@ -829,7 +909,6 @@ const allStopsContainer = document.createElement('div'); // Container for all st
 allStopsContainer.className = 'all-stops';
 document.querySelector('.stops-panel').appendChild(allStopsContainer); // Add to your panel section
 
-
 // Stroke Weight Elements
 const strokeWeightInput = document.getElementById('stroke-weight');
 const strokeWeightLabel = document.getElementById('stroke-weight-label'); // Reference for potential future use
@@ -845,6 +924,12 @@ let selectedStopId = null; // ID of the currently selected stop
 const baseWidth = 258; // Base width of the UI
 const baseHeight = 318; // Base height of the UI (without stops)
 const heightPerStop = 41; // Height per stop (adjust this based on your UI design)
+
+// Output path type and stops display value
+let outputPathType = 'Vector'; // Default output path type
+let stopsDisplayValue = 'all-stops'; // Default value for stops display
+
+let uiTooltips = true; 
 
 // Color stop dragging state
 let isDragging = false;        // Is a color stop being dragged?
@@ -874,7 +959,132 @@ document.addEventListener('DOMContentLoaded', () => {
     setupKeyboardListeners();   // Add global keyboard listeners (delete)
     setupGradientBarClickListener(); // Listener for gradient bar clicks
     updateRemoveButtonStates(); // Set initial button states
+    updateTooltipsVisibility();
 });
+
+document.querySelector(".settings").addEventListener("click", openSettingsPanel);
+function openSettingsPanel() {
+    // Create the panel element
+    const settingsPanel = document.createElement('div');
+    settingsPanel.className = 'settings-panel';
+    // Create the container inside
+    const container = document.createElement('div');
+    container.className = 'settings-container';
+    // Append container to panel
+    settingsPanel.appendChild(container);
+    // Append panel to document body
+    document.querySelector('.container').appendChild(settingsPanel);
+    settingsPanel.innerHTML = `
+        <div class="settings-container">
+            <div class="input-row" style="place-content: space-between;">
+                <h2>Settings</h2>
+                    <button id="exit-settings"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path fill="var(--color-icons-darker)" fill-rule="evenodd" d="M16.854 7.146a.5.5 0 0 1 0 .707L12.707 12l4.147 4.146a.5.5 0 0 1-.708.707L12 12.708l-4.146 4.147a.5.5 0 1 1-.708-.708L11.293 12 7.146 7.854a.5.5 0 0 1 .708-.708L12 11.293l4.146-4.147a.5.5 0 0 1 .708 0" clip-rule="evenodd"></path></svg></button>
+                </div>
+                <div class="input-row">
+                    <div class="input-column">
+                        <div class="label" for="output-path-type">Output paths as</div>
+                        <div class="custom-select-wrapper">
+                            <input type="hidden" id="output-path-type" value="`+ outputPathType + `">
+                            <div class="custom-select">
+                                <div class="select-selected" tabindex="0" id="output-path-type">
+                                    <span>Vector (Scalable)</span>
+                                </div>
+                                <div class="select-items select-hide"><div class="select-option same-as-selected" data-value="Vector">
+                                    <span>Vector (Scalable)</span>
+                                </div>
+                                <div class="select-option" data-value="Raster">
+                                    <span>Image (Efficient)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+              </div>
+              <div class="input-column">
+                <div class="label" for="stops-display">Stop Display</div>
+                <div class="custom-select-wrapper">
+                   <input type="hidden" id="stops-display" value="`+ stopsDisplayValue + `">
+                   <div class="custom-select">
+                      <div class="select-selected" tabindex="0" id="all-stops">
+                        <span>All Stops</span>
+                      </div>
+                        <div class="select-items select-hide"><div class="select-option same-as-selected" data-value="all-stops">
+                            <span>All Stops</span>
+                        </div>
+                        <div class="select-option" data-value="current-stop">
+                            <span>Current Stop</span>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+        <div class="input-column"><div class="label" for="tooltips">Visibility</div><div class="input-row"><div class="visibility-container" style="
+    width: min-content;
+"><div class="Tooltips" style="
+    border: 1px solid var(--color-secondary);
+    border-radius: 5px;
+"><div id="button-container" style="
+    display: flex;
+    flex: 1 1;
+    flex-direction: row;
+    place-items: center;
+    padding: 3px 3px 3px 8px;
+    gap: 2px;
+"><span>Tooltips</span><svg id="visible" width="22" height="14" viewBox="0 0 20 10" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:`+ ((uiTooltips === false) ? 'none' : '') +`">
+<g filter="url(#filter0_d_186_41)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.78571 5C5.78571 4.9472 5.82814 4.7136 6.03164 4.34C6.2663 3.91924 6.5631 3.53771 6.91164 3.2088C7.70521 2.4528 8.894 1.8 10.5 1.8C12.106 1.8 13.2956 2.4528 14.0876 3.208C14.4867 3.5896 14.779 3.992 14.9684 4.34C15.1711 4.7136 15.2143 4.948 15.2143 5C15.2143 5.0528 15.1711 5.2864 14.9684 5.66C14.7798 6.008 14.4867 6.4104 14.0884 6.7912C13.2948 7.5472 12.106 8.2 10.5 8.2C8.894 8.2 7.70443 7.5472 6.91243 6.792C6.56354 6.4629 6.26647 6.0811 6.03164 5.66C5.82893 5.2864 5.78571 5.052 5.78571 5ZM5 5C5 4 6.83307 1 10.5 1C14.1669 1 16 4 16 5C16 6 14.1669 9 10.5 9C6.83307 9 5 6 5 5ZM11.2857 5C11.2857 5.21217 11.2029 5.41566 11.0556 5.56569C10.9082 5.71571 10.7084 5.8 10.5 5.8C10.2916 5.8 10.0918 5.71571 9.94442 5.56569C9.79707 5.41566 9.71429 5.21217 9.71429 5C9.71429 4.78783 9.79707 4.58434 9.94442 4.43431C10.0918 4.28429 10.2916 4.2 10.5 4.2C10.7084 4.2 10.9082 4.28429 11.0556 4.43431C11.2029 4.58434 11.2857 4.78783 11.2857 5ZM12.0714 5C12.0714 5.42435 11.9059 5.83131 11.6112 6.13137C11.3165 6.43143 10.9168 6.6 10.5 6.6C10.0832 6.6 9.68353 6.43143 9.38883 6.13137C9.09413 5.83131 8.92857 5.42435 8.92857 5C8.92857 4.57565 9.09413 4.16869 9.38883 3.86863C9.68353 3.56857 10.0832 3.4 10.5 3.4C10.9168 3.4 11.3165 3.56857 11.6112 3.86863C11.9059 4.16869 12.0714 4.57565 12.0714 5Z" fill="var(--color-icons-lighter)"></path>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.78571 5C5.78571 4.9472 5.82814 4.7136 6.03164 4.34C6.2663 3.91924 6.5631 3.53771 6.91164 3.2088C7.70521 2.4528 8.894 1.8 10.5 1.8C12.106 1.8 13.2956 2.4528 14.0876 3.208C14.4867 3.5896 14.779 3.992 14.9684 4.34C15.1711 4.7136 15.2143 4.948 15.2143 5C15.2143 5.0528 15.1711 5.2864 14.9684 5.66C14.7798 6.008 14.4867 6.4104 14.0884 6.7912C13.2948 7.5472 12.106 8.2 10.5 8.2C8.894 8.2 7.70443 7.5472 6.91243 6.792C6.56354 6.4629 6.26647 6.0811 6.03164 5.66C5.82893 5.2864 5.78571 5.052 5.78571 5ZM5 5C5 4 6.83307 1 10.5 1C14.1669 1 16 4 16 5C16 6 14.1669 9 10.5 9C6.83307 9 5 6 5 5ZM11.2857 5C11.2857 5.21217 11.2029 5.41566 11.0556 5.56569C10.9082 5.71571 10.7084 5.8 10.5 5.8C10.2916 5.8 10.0918 5.71571 9.94442 5.56569C9.79707 5.41566 9.71429 5.21217 9.71429 5C9.71429 4.78783 9.79707 4.58434 9.94442 4.43431C10.0918 4.28429 10.2916 4.2 10.5 4.2C10.7084 4.2 10.9082 4.28429 11.0556 4.43431C11.2029 4.58434 11.2857 4.78783 11.2857 5ZM12.0714 5C12.0714 5.42435 11.9059 5.83131 11.6112 6.13137C11.3165 6.43143 10.9168 6.6 10.5 6.6C10.0832 6.6 9.68353 6.43143 9.38883 6.13137C9.09413 5.83131 8.92857 5.42435 8.92857 5C8.92857 4.57565 9.09413 4.16869 9.38883 3.86863C9.68353 3.56857 10.0832 3.4 10.5 3.4C10.9168 3.4 11.3165 3.56857 11.6112 3.86863C11.9059 4.16869 12.0714 4.57565 12.0714 5Z" stroke="var(--color-icons-lighter)" stroke-width="0.5"></path>
+</g>
+</svg>
+<svg id="hidden" style="display:`+ ((uiTooltips === true) ? 'none' : '') +`;" width="22" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0.374735 0.5C0.613594 0.5 0.836009 0.723359 0.929475 0.977767C0.966977 1.07993 1.0166 1.19612 1.07833 1.32633C1.28603 1.76202 1.60884 2.26583 2.04847 2.7426C2.92083 3.68912 4.22935 4.50643 6.00002 4.50643C7.77069 4.50643 9.07922 3.68912 9.95157 2.7436C10.3912 2.26583 10.7131 1.76202 10.9217 1.32633C10.9834 1.19612 11.0328 1.07993 11.0697 0.977767C11.1649 0.723359 11.3864 0.5 11.6253 0.5C11.8642 0.5 12.0537 0.725361 11.9862 0.990787C11.8114 1.67388 11.3198 2.64344 10.5106 3.50983L11.499 4.65266C11.5802 4.7467 11.6259 4.87424 11.6259 5.00723C11.6259 5.14022 11.5802 5.26776 11.499 5.3618C11.4177 5.45584 11.3075 5.50867 11.1926 5.50867C11.0777 5.50867 10.9675 5.45584 10.8862 5.3618L9.83301 4.14184C9.33038 4.55084 8.77951 4.874 8.19734 5.10138L8.58333 6.88925C8.60814 7.01687 8.58882 7.15067 8.52951 7.26202C8.47019 7.37337 8.37558 7.45344 8.26591 7.48511C8.15625 7.51677 8.04023 7.49752 7.94267 7.43146C7.84511 7.36541 7.77375 7.2578 7.74386 7.13164L7.36048 5.3588C6.91235 5.46034 6.45665 5.51033 6.00002 5.50803C5.54337 5.51 5.08766 5.45968 4.63957 5.35779L4.25618 7.13164C4.22629 7.2578 4.15494 7.36541 4.05738 7.43146C3.95982 7.49752 3.8438 7.51677 3.73413 7.48511C3.62446 7.45344 3.52986 7.37337 3.47054 7.26202C3.41122 7.15067 3.3919 7.01687 3.41672 6.88925L3.8027 5.10138C3.22053 4.874 2.66966 4.55084 2.16704 4.14184L1.11381 5.3618C1.07358 5.40836 1.02582 5.4453 0.973252 5.4705C0.920686 5.4957 0.864346 5.50867 0.80745 5.50867C0.750553 5.50867 0.694213 5.4957 0.641648 5.4705C0.589082 5.4453 0.54132 5.40836 0.501088 5.3618C0.460856 5.31524 0.428942 5.25996 0.407169 5.19912C0.385395 5.13829 0.374189 5.07308 0.374189 5.00723C0.374189 4.94138 0.385395 4.87618 0.407169 4.81534C0.428942 4.7545 0.460856 4.69922 0.501088 4.65266L1.48941 3.50883C0.680232 2.64344 0.188668 1.67388 0.0138518 0.990787C-0.0536517 0.725361 0.135012 0.5 0.374735 0.5Z" fill="white"/>
+</svg>
+
+
+</div></div></div></div></div>
+        </div>
+    `;
+    initializeCustomSelects();
+    document.querySelector("#exit-settings").addEventListener("click", closeSettingsPanel);
+    function closeSettingsPanel() {
+        if (settingsPanel) {
+            const outputPathInput = settingsPanel.querySelector('#output-path-type');
+            if (outputPathInput) {
+                outputPathType = outputPathInput.value;
+            }
+            const stopsDisplayInput = settingsPanel.querySelector('#stops-display');
+            if (stopsDisplayInput) {
+                stopsDisplayValue = stopsDisplayInput.value;
+            }
+            settingsPanel.remove();
+            removeEventListener("click", closeSettingsPanel);
+        }
+    }
+
+        // Tooltip visibility toggle
+        const activeSvg = document.querySelector('svg#visible');
+        console.log(uiTooltips); 
+        const inactiveSvg = document.querySelector('svg#hidden');
+        function toggleVisibility() {
+            uiTooltips = (activeSvg.style.display === '') ? false : true;
+            activeSvg.style.display = (uiTooltips === false) ? 'none' : '';
+            inactiveSvg.style.display = (uiTooltips === true) ? 'none' : '';
+            updateTooltipsVisibility();
+        }
+        document.querySelector(".visibility-container").addEventListener("click", toggleVisibility);
+    }
+function updateTooltipsVisibility() {
+const tooltips = document.querySelectorAll(".custom-tooltip");
+if (uiTooltips === false) {
+        for (let i = 0; i < tooltips.length; i++) {
+            tooltips[i].classList.add("hidden");
+        }
+} else {
+        for (let i = 0; i < tooltips.length; i++) {
+            tooltips[i].classList.remove("hidden");
+        }
+}
+}
 
 // Close custom selects when clicking outside
 document.addEventListener("click", closeAllSelect);
@@ -973,8 +1183,12 @@ function initializeCustomSelects() {
                 options[j].addEventListener("click", function() {
                     const newValue = this.getAttribute("data-value");
                     selectedDisplay.innerHTML = this.innerHTML;
-                    hiddenInput.value = newValue;
+                    hiddenInput.value = newValue; // This line updates the hidden input
 
+                    if (hiddenInput.id === 'output-path-type') {
+                        OutputPathType = newValue; // Update the global variable
+                        console.log("Selected output path type:", OutputPathType); // Log the change
+                    }
                     const siblings = this.parentNode.children;
                     for (let k = 0; k < siblings.length; k++) {
                         siblings[k].classList.remove("same-as-selected");
@@ -1076,7 +1290,7 @@ function createStopEditorElement(stop) {
             alphaInput.step = e.shiftKey ? 10 : 1; // Use 10 for Shift+Arrow, 1 otherwise
     });
     colorRow.appendChild(alphaInput);
-
+    
     // Alpha label
     const alphaLabel = document.createElement('label');
     alphaLabel.setAttribute('for', 'stop-alpha');
@@ -1084,6 +1298,11 @@ function createStopEditorElement(stop) {
     colorRow.appendChild(alphaLabel);
 
     stopEditor.appendChild(colorRow);
+
+    const alphaTooltip = document.createElement('span');
+    alphaTooltip.classList.add("custom-tooltip");
+    alphaTooltip.textContent = 'Alpha';
+    colorRow.appendChild(alphaTooltip);
 
     // Add remove button (state will be set by updateRemoveButtonStates)
     const removeBtn = document.createElement('button');
@@ -1191,7 +1410,6 @@ function setupStopEditorListeners(editorElement, stopId) {
          const stop = stops.find(s => s.id === stopId);
          if (stop) e.target.value = stop.color.replace('#', ''); // Revert to #rrggbb format
      });
-
 
     // Alpha input events
     alphaInput.addEventListener('mousedown', () => selectStop(stopId));
@@ -1475,7 +1693,12 @@ function updateStopEditorValues(stop) {
 
   // Remove the temporary element from the DOM
   outer.parentNode.removeChild(outer);
-  document.body.style.overflowY = 'scroll'; // Force a scrollbar
+  const hasScrollbar = document.body.scrollHeight > document.body.clientHeight;
+    if (hasScrollbar) {
+        document.body.style.overflowY = 'scroll'; // Force a scrollbar
+    } else {
+        document.body.style.overflowY = ''; // Reset to default
+    }
   return scrollbarWidth;
 }
 
@@ -1528,6 +1751,7 @@ function addNewStop(position, colorData) {
     positionStops();    // Position uses the (now stable) offsetWidth
     updateGradient();   // Update gradient display, etc. (this now updates button states)
     selectStop(stopId); // Select the newly added stop
+    updateTooltipsVisibility();
     setTimeout(() => {
         const bodyHeight = document.body.clientHeight;
         if (document.documentElement.scrollHeight > bodyHeight) {
@@ -1551,7 +1775,11 @@ function addNewStop(position, colorData) {
           // Check if the body's content height is greater than its visible height
           // This indicates a vertical scrollbar is likely present
           const hasScrollbar = document.body.scrollHeight > document.body.clientHeight;
-
+          if (hasScrollbar) {
+            document.body.style.overflowY = 'scroll'; // Force a scrollbar
+          } else {
+            document.body.style.overflowY = ''; // Reset to default
+          }
           // Calculate the final width
           const finalWidth = baseWidth + (hasScrollbar ? getScrollbarWidth() : 0);
 
@@ -1592,7 +1820,6 @@ function deleteStop(stopId) {
 
     // Send the resize message to the Figma plugin environment
     sendResizeMessage();
-    document.body.style.overflowY = ''; // Reset overflow after resize
 
     // If the deleted stop was selected, select another stop
     if (selectedStopId === stopId) {
@@ -1705,6 +1932,8 @@ function handleStopDragEnd() {
         updateGradient();
     }
 }
+
+
 
 // --- Gradient Bar Click Listener ---
 
@@ -2063,9 +2292,6 @@ function setupWeightDragListeners() {
       // Add button click handler
     function handleAddStopClick(event) {
 
-        // --- Fix Width BEFORE Resize Message & DOM Changes ---
-        document.body.style.overflowY = 'hidden'; // Reset body overflow
-
         const sortedStops = [...stops].sort((a, b) => a.position - b.position);
         let position = 50; // Default position
         let colorData = { color: "#808080", alpha: 1 }; // Default color/alpha
@@ -2132,15 +2358,22 @@ function setupWeightDragListeners() {
 }
 
 
-// Event listener for the "Apply as Image" button
-document.getElementById('render-image-btn').addEventListener('click', () => {
-    applyGradient('apply-image');
+// Event listener for the "Apply" button 
+document.querySelector('.apply-button-container button').addEventListener('click', () => {
+    // Get the hidden input element for the "Output paths as" dropdown
+    console.log(OutputPathType)
+    const outputType = OutputPathType ? OutputPathType : 'Vector'; // Get the value or default to 'Vector'
+    let applyArgument = 'apply-vector'; // Default argument
+    if (outputType === 'Raster') {
+        applyArgument = 'apply-image';
+    } else {
+        applyArgument = 'apply-vector';
+    }
+    applyGradient(applyArgument);
 });
 
       // Handles messages received from the plugin
       window.onmessage = (event) => {
-          // Basic security check (optional but recommended)
-          // if (event.origin !== 'expected_plugin_origin') return;
 
           const msg = event.data.pluginMessage;
           if (!msg) return; // Ignore messages not conforming to expected structure
